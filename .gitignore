@@ -1,0 +1,27 @@
+# Python tooling
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Local game installation, binaries, and original resource archives
+*.exe
+*.dll
+*.res
+*.rar
+*.zip
+*.pml
+*.PML
+*.CSV
+*.csv
+*.map
+*.ebm
+*.smp
+*.sbm
+*.bm1
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+
+# Keep explicit mission script outputs under tests tracked for reproducibility.
