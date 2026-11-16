@@ -1,6 +1,6 @@
 # Lesson 19 — game-tested Bee Queen baseline
 
-**Status: success confirmed in-game by the player.** The original complete Lesson 19 script was delivered in chat; the player's *actual local working* `TestMap.scp` remains the authoritative backup. Do not mistake the new Lesson 20 refactor for a separately game-tested copy.
+**Status: success confirmed in-game by the player.** A complete source transcription from the Lesson 19 chat response is included as `TestMap_from_conversation.scp`. The player's *actual local working* `TestMap.scp` remains the authoritative backup; the transcription was not byte-compared with that local file. Do not mistake the new Lesson 20 refactor for a separately game-tested copy.
 
 Verified behavior:
 - Proximity-based introduction, choice to apologize or insult.
