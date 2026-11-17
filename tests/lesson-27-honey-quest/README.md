@@ -1,6 +1,6 @@
 # Lesson 27 — The Queen's Missing Honey
 
-**Partially game-tested; proximity fix awaiting verification.** Player confirmed peaceful and combat quest completion, mixed resolutions, one-time reward, and saving/loading. A bug in pre-resolved NPCs triggered remote dialogue; the corrected build now requires visiting each NPC's location. Lesson 25 remains the verified fallback.
+**Partially game-tested; dialogue overlap fix awaiting verification.** Player confirmed peaceful and combat quest completion, mixed resolutions, one-time reward, and saving/loading. A bug in pre-resolved NPCs triggered remote dialogue; the corrected build now requires visiting each NPC's location. Lesson 25 remains the verified fallback.
 
 This lesson adds an interconnected quest across **bluhblah, Grumble, and Moss**, using the same **20×20 editor map / 19×19 accessible tiles** and the same **P2** faction. No Map Editor changes.
 
@@ -52,3 +52,13 @@ Players may resolve Grumble or Moss before formally starting the quest: a valid 
 
 ## Installation
 Use the generated `build/TestMap.scp` alongside `TestMap.smp`. Start a **new scenario** after replacing the script; use fresh saves for this build. Keep Lesson 25's working generated script backed up.
+
+## Dialogue overlap fix — experimental
+
+After successfully testing the proximity correction, the player reported that approaching an **already-peaceful** Grumble or Moss played the quest line and then immediately the character's standard peaceful greeting. The quest advances through `HoneyQuest_OnStep`, while a queued movement interaction can still invoke the character's `OnPreUse`.
+
+The corrected quest sets a one-use `HoneyQuestSkipGrumbleGreeting` or `HoneyQuestSkipMossGreeting` flag when it queues the NPC's peaceful quest dialogue. That NPC's `OnPreUse` consumes the flag and returns 0 without adding the standard greeting. Subsequent clicks should give the usual greeting. Flags are simple `ExSetVariable` numbers for save/load compatibility.
+
+**Important edge case:** If an NPC's `OnPreUse` is *not* called automatically after the quest narration, the next manual click may be swallowed once. Please specifically test a second deliberate click in that case and report it. If necessary we'll instead route the quest line through the interaction hook itself.
+
+Repeat normal quest, pre-resolved Grumble/Moss, and save/load tests. No map edits.
