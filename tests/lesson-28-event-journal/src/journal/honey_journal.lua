@@ -30,6 +30,19 @@ function HoneyJournal_Stage2()
     )
 end
 
+function HoneyJournal_StageRecovered()
+    if ExGetVariable("HoneyJournalRecovered") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalRecovered", 1)
+    ExMessageBoxStandard(
+        "Royal Honey Recovered: Return to the Queen. "
+        .. "Moss has surrendered the missing honey. "
+        .. "Bring it back to bluhblah for your reward.",
+        ExGetMainHeroID()
+    )
+end
+
 function HoneyJournal_Stage3()
     if ExGetVariable("HoneyJournalEntry3") == 1 then
         return
