@@ -25,6 +25,16 @@ def main():
             if name in functions:
                 sys.exit("Duplicate function: " + name)
             functions[name] = str(path)
+        # Lua 4 requires return to terminate its enclosing block. Catch the
+        # regression that previously prevented the mission from even loading:
+        # a command statement immediately after a return at the same indent.
+        for match in re.finditer(
+            r"(?m)^(?P<indent>[ \\t]*)return\\b[^\\n]*\\n"
+            r"(?:(?P=indent)[ \\t]*--[^\\n]*\\n)*"
+            r"(?P=indent)(?:Ex[A-Za-z_][A-Za-z_0-9]*\\s*\\(|return\\b)",
+            source
+        ):
+            sys.exit("Unreachable statement after return in " + str(path))
         if re.search(r"\blocal\b", re.sub(r"--[^\n]*", "", source)):
             sys.exit("Unexpected local keyword in " + str(path))
         if path.parent == ENCOUNTERS:
