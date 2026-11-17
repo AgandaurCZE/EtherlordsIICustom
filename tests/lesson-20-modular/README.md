@@ -1,6 +1,6 @@
 # Lesson 20 — modular Bee Queen encounter prototype
 
-**Status: generated, but not yet verified in Etherlords II.** Preserve Lesson 19 as the fallback.
+**Status: game-tested success.** The player confirmed both dialogue branches, native reward, hostile charge, battle refusal/reset/rearm, and victory in Etherlords II on 2026-11-17. Preserve this working version as the rollback point for Lesson 21.
 
 Files:
 - `src/encounters/bee_queen.lua`: encounter-specific dialogue, reward and battle logic.

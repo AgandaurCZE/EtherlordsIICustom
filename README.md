@@ -8,12 +8,14 @@ A source-controlled workshop for building original adventure-map encounters and 
 - [Testing and rollback](docs/TESTING_GUIDE.md) — how to test without losing the proven Bee Queen encounter.
 - [Script references](references/ORIGINAL_GAME_FILES.md) — descriptions of the original editor documentation and campaign files studied.
 - [Lesson 19](tests/lesson-19-working/README.md) — successful in-game behavior; save the player's exact original working script as the authoritative baseline.
-- [Lesson 20](tests/lesson-20-modular/README.md) — **not yet verified in game**; modular refactor and script builder.
+- [Lesson 20](tests/lesson-20-modular/README.md) — **game-tested success**; modular refactor and script builder.
+- [Lesson 21](tests/lesson-21-two-encounters/README.md) — **experimental** second encounter with Grumble; requires P3 map setup.
 
 ## Status
 
 - **Lesson 19: game-tested success.** Bee Queen dialogue, peaceful reward, hostile automatic charge, declining combat and rearming, and victory were confirmed by the player.
-- **Lesson 20: generated prototype; requires regression testing.** Keep the working Lesson 19 backup until all branches are tested.
+- **Lesson 20: game-tested success.** The player confirmed all dialogue, gift, battle-decline reset/rearm and battle-victory tests.
+- **Lesson 21: experimental two-encounter build.** Do not overwrite the only Lesson 20 backup. Grumble must use P3, not P2.
 
 ## Safety and ownership
 
