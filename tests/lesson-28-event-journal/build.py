@@ -60,7 +60,7 @@ def main():
     if not {"HoneyQuest_OnStep", "HoneyQuest_BeeInteraction",
             "HoneyQuest_Reward"}.issubset(functions):
         sys.exit("Honey quest functions not found")
-    if not {"HoneyJournal_Stage1", "HoneyJournal_Stage2", "HoneyJournal_Stage3"}.issubset(functions):
+    if not {"HoneyJournal_Stage1", "HoneyJournal_Stage2", "HoneyJournal_StageRecovered", "HoneyJournal_Stage3"}.issubset(functions):
         sys.exit("Journal callbacks missing")
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text("-- GENERATED: Lesson 28 Event Journal (Lua 4).\n"
