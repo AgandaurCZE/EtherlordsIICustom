@@ -173,10 +173,7 @@ function Moss_OnPreUse(object_id, hero_id)
             return 0
         end
         ExMessageToScreen("MOSS TEST: Peaceful PreUse intercepted")
-        ExAddCommandText(
-            object_id, "Welcome back, careful traveler. My mushrooms are safe.", 0
-        )
-        return 0
+        return SporeQuest_MossInteraction(object_id, hero_id)
     end
     return nil
 end
