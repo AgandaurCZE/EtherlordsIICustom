@@ -7,8 +7,8 @@ This lesson adds **Moss**, a mushroom guardian, as a third independently registe
 ## Map Editor orders
 
 - Hero P1 unchanged; Bee Queen **P2 at (7,5)** unchanged; Grumble **P2 at (15,10)** unchanged.
-- Place a new monster called **Moss** at **(22,15)**, assign **P2** (no P3 tower), and give it a working battle deck on all difficulty levels.
-- Ensure the tile is valid and accessible by the player, with no nearby interfering monster. If your terrain blocks that tile, adjust Moss's trigger/home coordinates in the module and rebuild before testing.
+- Place a new monster called **Moss** at **(10,16)**, assign **P2** (no P3 tower), and give it a working battle deck on all difficulty levels.
+- Ensure (10,16) is actually passable and accessible on your particular terrain, with no nearby interfering monster. This coordinate is inside the 19x19 playable grid, but terrain passability still requires a Map Editor check. If your terrain blocks that tile, adjust Moss's trigger/home coordinates in the module and rebuild before testing.
 - Save as `TestMap.smp`. Do not replace the working Lesson 24 `TestMap.scp` backup.
 
 ## Moss's choices
