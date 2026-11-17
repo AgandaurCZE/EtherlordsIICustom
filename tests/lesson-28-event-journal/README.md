@@ -1,6 +1,6 @@
 # Lesson 28 — Native Events List / Notebook Experiment
 
-**Partially game-tested (2026-11-17):** User confirmed that custom quest popup text appears in the native Events List with hero portrait/day, and that normal dialogue and battles are also recorded. User also confirmed that entries persist unchanged across save/load. A follow-up experimental update adds Moss's missing fourth milestone and suppresses journal entries for repeatable greetings using `ExAddCommandText(..., 0)`. Lesson 27 is the proven fallback. This builds on Lesson 27 without modifying its folder or map.
+**Game-tested success (2026-11-17).** User verified quest-focused Events List entries from acceptance to recovery and completion, suppression of routine dialogue entries, and saved journals persisting with distinct histories across different save files.
 
 ## Goal
 Find out whether the game's **Events List** is backed by the scripting API's documented **notebook**, and if event entries survive saving/loading.
@@ -56,3 +56,7 @@ Please test that repeated peaceful interactions remain visible in gameplay **but
 Player confirmed the new Moss recovery popup works, repeated peaceful greetings no longer create entries, and native journal entries persist across save/load. We now keep only **quest-giving and quest-completion dialogue** recorded with `ExAddCommandText(..., 1)`; routine encounter introductions, peaceful/hostile responses, and intermediate spoken clue/recovery lines use `bNote=0`, remaining visible in gameplay. Four dedicated milestone messages continue writing quest progress to the Events List via `ExMessageBoxStandard` (accepted, clue found, honey recovered, completed).
 
 This is an **untested refinement**: after updating the script, verify that the queen's quest acceptance and completion speech are logged, Grumble/Moss spoken dialogue no longer fills the Events List, and all four milestone entries and save/load remain intact. Engine-managed battle log entries are unaffected and cannot be silenced by `bNote`.
+
+## Final verification — 2026-11-17
+
+The player supplied screenshots confirming: empty Events List before the quest; recorded quest-giver dialogue and objective; `Royal Honey Recovered` journal record; completed quest record with game day; and no flood of routine or repeated dialogue. Saving/loading preserves each save's own distinct Events List history. This lesson is now the verified quest journal baseline; any future change must be tested separately. Native engine battle entries may still appear as appropriate.
