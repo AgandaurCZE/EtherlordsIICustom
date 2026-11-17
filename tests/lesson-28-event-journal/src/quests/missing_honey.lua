@@ -23,12 +23,12 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
     end
     if honey_stage == 1 then
         ExAddCommandText(object_id,
-            "BZZ! Grumble knows something. Please question him!", 1)
+            "BZZ! Grumble knows something. Please question him!", 0)
         return 0
     end
     if honey_stage == 2 then
         ExAddCommandText(object_id,
-            "BZZ! Find Moss! My royal honey is still missing!", 1)
+            "BZZ! Find Moss! My royal honey is still missing!", 0)
         return 0
     end
     if honey_stage == 3 then
@@ -46,7 +46,7 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
     end
     if honey_stage == 4 then
         ExAddCommandText(object_id,
-            "BZZ! My royal honey is safe, thanks to you!", 1)
+            "BZZ! My royal honey is safe, thanks to you!", 0)
         return 0
     end
     return nil
@@ -130,6 +130,7 @@ function HoneyQuest_OnStep()
                 "I recovered the Queen's honey among Moss's belongings.", 1)
         end
         ExMessageToScreen("QUEST: Honey recovered - Return to Bee")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_StageRecovered")
         return
     end
 end
