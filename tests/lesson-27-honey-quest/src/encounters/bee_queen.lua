@@ -171,6 +171,8 @@ function Bee_OnPreUse(object_id, hero_id)
     end
     if object_id == ExGetVariable("BeeRuntimeId") then
         ExMessageToScreen("BEE TEST: Peaceful PreUse intercepted")
+        -- Lesson 27: Bee is the quest giver after the original truce.
+        return HoneyQuest_BeeInteraction(object_id, hero_id)
         ExAddCommandText(object_id, "BZZ BZZ! Welcome back, friend of the Hive!", 1)
         return 0
     end
