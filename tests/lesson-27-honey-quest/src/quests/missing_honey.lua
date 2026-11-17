@@ -92,7 +92,10 @@ function HoneyQuest_OnStep()
         return
     end
 
-    if honey_stage == 1 and HoneyQuest_Resolved(honey_grumble_state) == 1 then
+    -- A previously resolved NPC does not remotely deliver quest clues.
+    -- The hero must visit the NPC's area after the quest reaches this stage.
+    if honey_stage == 1 and HoneyQuest_Resolved(honey_grumble_state) == 1
+       and CalcDistanceObjectPoint(ExGetMainHeroID(), 15, 10) < 3 then
         ExSetVariable("HoneyQuestStage", 2)
         honey_grumble_id = ExGetVariable("GrumbleRuntimeId")
         if honey_grumble_state == "Peaceful" and honey_grumble_id ~= nil then
@@ -106,7 +109,8 @@ function HoneyQuest_OnStep()
         return
     end
 
-    if honey_stage == 2 and HoneyQuest_Resolved(honey_moss_state) == 1 then
+    if honey_stage == 2 and HoneyQuest_Resolved(honey_moss_state) == 1
+       and CalcDistanceObjectPoint(ExGetMainHeroID(), 10, 16) < 3 then
         ExSetVariable("HoneyQuestStage", 3)
         ExSetVariable("HoneyQuestHoneyRecovered", 1)
         honey_moss_id = ExGetVariable("MossRuntimeId")
