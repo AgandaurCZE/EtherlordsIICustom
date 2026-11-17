@@ -29,9 +29,9 @@ def main():
         # regression that previously prevented the mission from even loading:
         # a command statement immediately after a return at the same indent.
         for match in re.finditer(
-            r"(?m)^(?P<indent>[ \\t]*)return\\b[^\\n]*\\n"
-            r"(?:(?P=indent)[ \\t]*--[^\\n]*\\n)*"
-            r"(?P=indent)(?:Ex[A-Za-z_][A-Za-z_0-9]*\\s*\\(|return\\b)",
+            r"(?m)^(?P<indent>[ \t]*)return\b[^\n]*\n"
+            r"(?:(?P=indent)[ \t]*--[^\n]*\n)*"
+            r"(?P=indent)(?:Ex[A-Za-z_][A-Za-z_0-9]*\s*\(|return\b)",
             source
         ):
             sys.exit("Unreachable statement after return in " + str(path))
