@@ -99,6 +99,10 @@ function HoneyQuest_OnStep()
         ExSetVariable("HoneyQuestStage", 2)
         honey_grumble_id = ExGetVariable("GrumbleRuntimeId")
         if honey_grumble_state == "Peaceful" and honey_grumble_id ~= nil then
+            -- The movement click which brought the hero here may still
+            -- invoke OnPreUse after this queued quest narration.
+            -- Consume that extra greeting once, not permanently.
+            ExSetVariable("HoneyQuestSkipGrumbleGreeting", 1)
             ExAddCommandText(honey_grumble_id,
                 "I traded the Queen's honey to Moss for rare mushrooms!", 1)
         else
@@ -115,6 +119,7 @@ function HoneyQuest_OnStep()
         ExSetVariable("HoneyQuestHoneyRecovered", 1)
         honey_moss_id = ExGetVariable("MossRuntimeId")
         if honey_moss_state == "Peaceful" and honey_moss_id ~= nil then
+            ExSetVariable("HoneyQuestSkipMossGreeting", 1)
             ExAddCommandText(honey_moss_id,
                 "The honey? Of course! Please return it to the Queen.", 1)
         else
