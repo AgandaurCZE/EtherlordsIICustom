@@ -56,9 +56,9 @@ function Grumble_OnStep()
 
     ExSoftAbortCmd(grumble_hero)
     ExAbortAllCommand()
-    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 1)
-    ExAddCommandText(grumble_hero, "I am just exploring.", 1)
-    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 1)
+    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 0)
+    ExAddCommandText(grumble_hero, "I am just exploring.", 0)
+    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 0)
     ExAddCommandExecuteScriptFunction("Grumble_AskQuestion")
 end
 
@@ -78,20 +78,18 @@ function Grumble_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("GrumbleChoiceState", "Peaceful")
         -- Lesson 22: no faction-wide change; Grumble is on P2.
-        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 1)
+        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 0)
         ExAddCommandText(
             ExGetVariable("GrumbleRuntimeId"),
-            "Hmph. Fine. You may pass without a fight.",
-            1
+            "Hmph. Fine. You may pass without a fight.", 0
         )
     else
         ExSetVariable("GrumbleChoiceState", "Hostile")
         -- Lesson 22: Grumble shares hostile P2 faction with Bee.
-        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 0)
         ExAddCommandText(
             ExGetVariable("GrumbleRuntimeId"),
-            "HA! Finally, a worthy opponent! Prepare yourself!",
-            1
+            "HA! Finally, a worthy opponent! Prepare yourself!", 0
         )
         ExAddCommandExecuteScriptFunction("Grumble_LaunchAttack")
     end
