@@ -1,6 +1,6 @@
 # Lesson 25 — Third encounter and reusable template
 
-**Experimental; not yet game-tested.** Lesson 24 hotfix is the latest tested fallback.
+**Game-tested success (2026-11-17).** User verified the Moss encounter using a Hero-checked character, with peace/hostile choices, battle refusal/reset, victory, and save/load persistence. Lesson 24 remains a rollback option.
 
 This lesson adds **Moss**, a mushroom guardian, as a third independently registered NPC on P2. Bee Queen and Grumble encounter code is unchanged, and the save-safe registry / five engine hook router are unchanged. The builder picks up the third `moss.lua` module alphabetically without editing the router.
 
