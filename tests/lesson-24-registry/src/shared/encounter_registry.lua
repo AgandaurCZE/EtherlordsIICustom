@@ -75,7 +75,7 @@ function EncounterRegistry_OnIntercept(hero_id, interceptor_id)
             if ExGetVariable(registry_debug_key) ~= 1 then
                 ExSetVariable(registry_debug_key, 1)
                 ExMessageToScreen(
-                    string.upper(registry_entry.name) ..
+                    registry_entry.name ..
                     " TEST: Peaceful intercept blocked"
                 )
             end
