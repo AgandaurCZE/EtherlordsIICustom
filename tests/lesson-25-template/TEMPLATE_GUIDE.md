@@ -6,7 +6,7 @@ This is a **tested-pattern template**, not an engine-level helper that magically
 
 1. Copy `src/encounters/moss.lua` to `src/encounters/<new_slug>.lua` (e.g. `sprig.lua`).
 2. Replace every `Moss`, `moss`, and `MOSS` prefix with your new unique encounter prefix.
-3. Change every home/trigger coordinate (currently **22,15**) and edit each line of dialogue.
+3. Change every home/trigger coordinate (currently **10,16**) and edit each line of dialogue.
 4. Set that NPC on **P2** in the Map Editor. Keep it away from the other NPCs' trigger zones.
 5. Preserve the same state machine: `nil/Ready -> Intro -> Question -> Peaceful` OR `Hostile -> Charging -> Cooling -> Ready` (victory -> `Completed`).
 6. Keep your `ExGetVariable/ExSetVariable` keys unique: `MossChoiceState`, `MossRuntimeId`, `MossHomeX`, etc.
