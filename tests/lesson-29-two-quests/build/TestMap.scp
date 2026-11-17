@@ -1,0 +1,1314 @@
+-- GENERATED: Lesson 29 Dual Quests (Lua 4).
+-- Four encounters, two independent quests, native notebook.
+
+-- BEGIN src/shared/encounter_registry.lua
+-- LESSON 24: Lua 4 compatible encounter registry.
+-- Store only callback names (strings), NOT function references in tables.
+-- Lua 4 save/load can restore registry data without restoring function fields.
+-- Resolve global functions dynamically with Lua 4 getglobal(name).
+-- Load this module BEFORE any encounter source registers itself.
+EncounterRegistry_Entries = {}
+EncounterRegistry_Count = 0
+
+function EncounterRegistry_Register(name, runtime_key, state_key,
+    on_step_name, on_close_name, on_battle_name, on_preuse_name)
+    EncounterRegistry_Count = EncounterRegistry_Count + 1
+    EncounterRegistry_Entries[EncounterRegistry_Count] = {
+        name = name,
+        runtime_key = runtime_key,
+        state_key = state_key,
+        on_step_name = on_step_name,
+        on_close_name = on_close_name,
+        on_battle_name = on_battle_name,
+        on_preuse_name = on_preuse_name
+    }
+end
+
+-- Never store a function in an encounter entry: retrieve it from the global
+-- function namespace at the moment it is needed.
+function EncounterRegistry_Call(name, a, b, c)
+    registry_callback = getglobal(name)
+    if type(registry_callback) ~= "function" then
+        ExMessageToScreen("REGISTRY ERROR: " .. tostring(name))
+        return nil
+    end
+    return registry_callback(a, b, c)
+end
+
+function EncounterRegistry_OnStep()
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        EncounterRegistry_Call(registry_entry.on_step_name)
+    end
+end
+
+function EncounterRegistry_OnCloseMessageBox(callback)
+    -- Keep former behavior: each handler ignores callbacks unless
+    -- its own state is "Question".
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        EncounterRegistry_Call(registry_entry.on_close_name, callback)
+    end
+end
+
+function EncounterRegistry_OnBattleFinishing(attacker_id, target_id, winner_id)
+    -- Preserve Lesson 23 dispatch priority: Grumble (registered second)
+    -- before Bee. Only one battle handler is allowed to handle a fight.
+    for registry_index = EncounterRegistry_Count, 1, -1 do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_id = ExGetVariable(registry_entry.runtime_key)
+        if registry_id ~= nil and
+           (attacker_id == registry_id or target_id == registry_id) then
+            return EncounterRegistry_Call(registry_entry.on_battle_name, attacker_id, target_id, winner_id)
+        end
+    end
+    return 1
+end
+
+function EncounterRegistry_OnPreUse(object_id, hero_id)
+    -- Preserve Lesson 23 dispatch priority: Bee before Grumble.
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_answer = EncounterRegistry_Call(registry_entry.on_preuse_name, object_id, hero_id)
+        if registry_answer ~= nil then
+            return registry_answer
+        end
+    end
+    return 1
+end
+
+function EncounterRegistry_OnIntercept(hero_id, interceptor_id)
+    if hero_id ~= ExGetMainHeroID() then
+        return 1
+    end
+
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_id = ExGetVariable(registry_entry.runtime_key)
+        if registry_id ~= nil and interceptor_id == registry_id and
+           ExGetVariable(registry_entry.state_key) == "Peaceful" then
+
+            registry_debug_key = registry_entry.name .. "InterceptDebug"
+            if ExGetVariable(registry_debug_key) ~= 1 then
+                ExSetVariable(registry_debug_key, 1)
+                ExMessageToScreen(
+                    registry_entry.name ..
+                    " TEST: Peaceful intercept blocked"
+                )
+            end
+            return 0
+        end
+    end
+    return 1
+end
+-- END
+
+-- BEGIN src/encounters/bee_queen.lua
+-- Bee Queen encounter, extracted from working Lesson 19.
+-- Only Bee_* functions are defined here; engine hooks live in hook_router.lua.
+-- IMPORTANT: keep variable persistence through ExSetVariable/ExGetVariable.
+
+function Bee_OnStep()
+    state = ExGetVariable("BeeChoiceState")
+    hero_id = ExGetMainHeroID()
+
+    if state == "Cooling" then
+        if CalcDistanceObjectPoint(hero_id, 7, 5) >= 3 then
+            ExSetVariable("BeeChoiceState", "Ready")
+            ExMessageToScreen("BEE RESET: Encounter rearmed")
+        end
+        return
+    end
+
+    if state ~= nil and state ~= "Ready" then
+        return
+    end
+
+    if CalcDistanceObjectPoint(hero_id, 7, 5) >= 3 then
+        return
+    end
+
+    bee_id = nil
+    bee_distance = 9999
+    for i = 0, ExGetMobCount() - 1 do
+        mob_id = ExGetMobByIndex(i)
+        mob_distance = CalcDistanceObjectPoint(mob_id, 7, 5)
+        if mob_distance < bee_distance then
+            bee_distance = mob_distance
+            bee_id = mob_id
+        end
+    end
+
+    if bee_id == nil or bee_distance > 2 then
+        ExSetVariable("BeeChoiceState", "NotFound")
+        ExMessageToScreen("Bee not found!")
+        return
+    end
+
+    bee_x, bee_y = ExGetPos(bee_id)
+    hero_x, hero_y = ExGetPos(hero_id)
+    ExSetVariable("BeeRuntimeId", bee_id)
+    ExSetVariable("BeeHomeX", bee_x)
+    ExSetVariable("BeeHomeY", bee_y)
+    ExSetVariable("BeeHeroStartX", hero_x)
+    ExSetVariable("BeeHeroStartY", hero_y)
+    ExSetVariable("BeeChoiceState", "Intro")
+
+    ExSoftAbortCmd(hero_id)
+    ExAbortAllCommand()
+    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 0)
+    ExAddCommandText(hero_id, "I was just passing through!", 0)
+    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 0)
+    ExAddCommandExecuteScriptFunction("Bee_AskQuestion")
+end
+
+function Bee_AskQuestion()
+    ExSetVariable("BeeChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "Will you apologize to the Queen of Bees?\n\nYES = Apologize\nNO = Insult",
+        0
+    )
+end
+
+function Bee_OnCloseMessageBox(callback)
+    if ExGetVariable("BeeChoiceState") ~= "Question" then
+        return
+    end
+
+    if callback == "OK" then
+        ExSetVariable("BeeChoiceState", "Peaceful")
+        -- Lesson 22: no faction-wide change; keep P1/P2 hostile.
+        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 0)
+        ExAddCommandExecuteScriptFunction("Bee_GiveGift")
+    else
+        ExSetVariable("BeeChoiceState", "Hostile")
+        -- Lesson 22: P1/P2 remains hostile for native battle initiation.
+        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 0)
+        ExAddCommandExecuteScriptFunction("Bee_LaunchAttack")
+    end
+end
+
+function Bee_GiveGift()
+    if ExGetVariable("BeeGiftReceived") == 1 then
+        return
+    end
+    ExSetVariable("BeeGiftReceived", 1)
+    gift_roll = 1
+    if random ~= nil then
+        gift_roll = random(2)
+    end
+    gift_code = "ALST"
+    if gift_roll == 2 then
+        gift_code = "ASLT"
+    end
+    ExAddSpell(ExGetMainHeroID(), gift_code)
+    ExStartLootMessage()
+    ExAddLootMessageSpell(gift_code)
+    ExSendLootMessage()
+end
+
+function Bee_LaunchAttack()
+    bee_id = ExGetVariable("BeeRuntimeId")
+    hero_id = ExGetMainHeroID()
+    if bee_id == nil then
+        return
+    end
+    ExSetVariable("BeeChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(bee_id, hero_id)
+    ExAddCommandCameraToObject(bee_id, 0)
+    attack_id = ExAddCommandMoveAndUseObject(bee_id, hero_id)
+    ExSetVariable("BeeAttackCommand", attack_id)
+end
+
+-- Returns engine 'accept' value (0/1) for this bee battle,
+-- or nil if the battle is unrelated. Keep Lesson 19 outcome logic.
+function Bee_OnBattleFinishing(attacker_id, target_id, winner_id)
+    ExMessageToScreen(
+        "BATTLE HOOK: A=" .. tostring(attacker_id) ..
+        " T=" .. tostring(target_id) ..
+        " W=" .. tostring(winner_id)
+    )
+
+    bee_id = ExGetVariable("BeeRuntimeId")
+    hero_id = ExGetMainHeroID()
+
+    if bee_id == nil then
+        return 1
+    end
+    if attacker_id ~= bee_id and target_id ~= bee_id then
+        return 1
+    end
+    if ExGetVariable("BeeChoiceState") ~= "Charging" then
+        return 1
+    end
+    if winner_id == hero_id then
+        ExSetVariable("BeeChoiceState", "Completed")
+        ExMessageToScreen("BEE: Hero won the battle")
+        return 1
+    end
+
+    ExMessageToScreen("BEE RESET: Beginning rollback")
+    ExSetVariable("BeeChoiceState", "Cooling")
+    home_x = ExGetVariable("BeeHomeX")
+    home_y = ExGetVariable("BeeHomeY")
+    start_x = ExGetVariable("BeeHeroStartX")
+    start_y = ExGetVariable("BeeHeroStartY")
+
+    if home_x ~= nil and home_y ~= nil then
+        ExJumpToPos(bee_id, home_x, home_y)
+        ExMessageToScreen("BEE RESET: Queen returned home")
+    end
+    if start_x ~= nil and start_y ~= nil then
+        ExJumpToPos(hero_id, start_x, start_y)
+        ExMessageToScreen("BEE RESET: Hero repositioned")
+    end
+    ExAddCommandCameraToObject(hero_id, 0)
+    return 0
+end
+
+-- Return nil for unrelated objects. Return 0/1 for handled bee interactions.
+function Bee_OnPreUse(object_id, hero_id)
+    if ExGetVariable("BeeChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("BeeRuntimeId") then
+        ExMessageToScreen("BEE TEST: Peaceful PreUse intercepted")
+        -- Lesson 27: Bee is the quest giver after the original truce.
+        return HoneyQuest_BeeInteraction(object_id, hero_id)
+    end
+    return nil
+end
+
+-- Lesson 24: self-register at script initialization.
+EncounterRegistry_Register("Bee", "BeeRuntimeId", "BeeChoiceState",
+    "Bee_OnStep", "Bee_OnCloseMessageBox", "Bee_OnBattleFinishing", "Bee_OnPreUse")
+-- END
+
+-- BEGIN src/encounters/bramble.lua
+-- LESSON 29: Bramble, dangerous hidden spore thief. Based on verified encounter mechanics
+-- Map position (1, 16). Bramble belongs to P2 with Bee, Grumble and Moss.
+-- All runtime global scratch variables and stored state are Bramble-prefixed.
+
+function Bramble_OnStep()
+    bramble_state = ExGetVariable("BrambleChoiceState")
+    bramble_hero = ExGetMainHeroID()
+
+    if bramble_state == "Cooling" then
+        if CalcDistanceObjectPoint(bramble_hero, 1, 16) >= 3 then
+            ExSetVariable("BrambleChoiceState", "Ready")
+            ExMessageToScreen("BRAMBLE RESET: Encounter rearmed")
+        end
+        return
+    end
+    if bramble_state ~= nil and bramble_state ~= "Ready" then
+        return
+    end
+    if CalcDistanceObjectPoint(bramble_hero, 1, 16) >= 3 then
+        return
+    end
+
+    -- Guard against overlapping scripted cinematics.
+    bramble_bee_state = ExGetVariable("BeeChoiceState")
+    if bramble_bee_state == "Intro" or bramble_bee_state == "Question"
+       or bramble_bee_state == "Hostile" or bramble_bee_state == "Charging" then
+        return
+    end
+    bramble_grumble_state = ExGetVariable("GrumbleChoiceState")
+    if bramble_grumble_state == "Intro" or bramble_grumble_state == "Question"
+       or bramble_grumble_state == "Hostile" or bramble_grumble_state == "Charging" then
+        return
+    end
+
+    bramble_moss_state = ExGetVariable("MossChoiceState")
+    if bramble_moss_state == "Intro" or bramble_moss_state == "Question"
+       or bramble_moss_state == "Hostile" or bramble_moss_state == "Charging" then
+        return
+    end
+
+    bramble_id = nil
+    bramble_distance = 9999
+    for bramble_index = 0, ExGetMobCount() - 1 do
+        bramble_candidate = ExGetMobByIndex(bramble_index)
+        bramble_current_distance = CalcDistanceObjectPoint(
+            bramble_candidate, 1, 16
+        )
+        if bramble_current_distance < bramble_distance then
+            bramble_id = bramble_candidate
+            bramble_distance = bramble_current_distance
+        end
+    end
+    if bramble_id == nil or bramble_distance > 2 then
+        ExSetVariable("BrambleChoiceState", "NotFound")
+        ExMessageToScreen("BRAMBLE ERROR: Cannot find monster near (1, 16)")
+        return
+    end
+
+    bramble_home_x, bramble_home_y = ExGetPos(bramble_id)
+    bramble_start_x, bramble_start_y = ExGetPos(bramble_hero)
+    ExSetVariable("BrambleRuntimeId", bramble_id)
+    ExSetVariable("BrambleHomeX", bramble_home_x)
+    ExSetVariable("BrambleHomeY", bramble_home_y)
+    ExSetVariable("BrambleHeroStartX", bramble_start_x)
+    ExSetVariable("BrambleHeroStartY", bramble_start_y)
+    ExSetVariable("BrambleChoiceState", "Intro")
+
+    ExSoftAbortCmd(bramble_hero)
+    ExAbortAllCommand()
+    ExAddCommandText(bramble_id, "You found my hideout? Not many travelers get this far.", 0)
+    ExAddCommandText(bramble_hero, "Moss says you've stolen some rare mushroom spores.", 0)
+    ExAddCommandText(bramble_id, "You'll never overpower me. Will you negotiate, or challenge me?", 0)
+    ExAddCommandExecuteScriptFunction("Bramble_AskQuestion")
+end
+
+function Bramble_AskQuestion()
+    ExSetVariable("BrambleChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "What will you do?\n\nYES = Negotiate for the spores\nNO = Challenge Bramble",
+        0
+    )
+end
+
+function Bramble_OnCloseMessageBox(callback)
+    if ExGetVariable("BrambleChoiceState") ~= "Question" then
+        return
+    end
+    if callback == "OK" then
+        ExSetVariable("BrambleChoiceState", "Peaceful")
+        -- Shared P2 faction stays hostile; peaceful state is object-specific.
+        ExAddCommandText(ExGetMainHeroID(), "Give Moss her spores back. No one needs to fight.", 0)
+        ExAddCommandText(
+            ExGetVariable("BrambleRuntimeId"),
+            "Hah. Sensible. Take the spores, but keep my secret.", 0
+        )
+    else
+        ExSetVariable("BrambleChoiceState", "Hostile")
+        -- Shared P2 faction stays hostile; do not change faction hostility.
+        ExAddCommandText(ExGetMainHeroID(), "I won't negotiate with a thief!", 0)
+        ExAddCommandText(
+            ExGetVariable("BrambleRuntimeId"),
+            "Then face my strongest spells. I warned you!", 0
+        )
+        ExAddCommandExecuteScriptFunction("Bramble_LaunchAttack")
+    end
+end
+
+function Bramble_LaunchAttack()
+    bramble_id = ExGetVariable("BrambleRuntimeId")
+    bramble_hero = ExGetMainHeroID()
+    if bramble_id == nil then
+        return
+    end
+    ExSetVariable("BrambleChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(bramble_id, bramble_hero)
+    ExAddCommandCameraToObject(bramble_id, 0)
+    bramble_attack_id = ExAddCommandMoveAndUseObject(
+        bramble_id, bramble_hero
+    )
+    ExSetVariable("BrambleAttackCommand", bramble_attack_id)
+end
+
+function Bramble_IsBattle(attacker_id, target_id)
+    bramble_id = ExGetVariable("BrambleRuntimeId")
+    if bramble_id == nil then
+        return 0
+    end
+    if attacker_id == bramble_id or target_id == bramble_id then
+        return 1
+    end
+    return 0
+end
+
+function Bramble_OnBattleFinishing(attacker_id, target_id, winner_id)
+    bramble_id = ExGetVariable("BrambleRuntimeId")
+    bramble_hero = ExGetMainHeroID()
+    if bramble_id == nil then
+        return 1
+    end
+    if ExGetVariable("BrambleChoiceState") ~= "Charging" then
+        return 1
+    end
+
+    ExMessageToScreen(
+        "BRAMBLE BATTLE: W=" .. tostring(winner_id)
+    )
+    if winner_id == bramble_hero then
+        ExSetVariable("BrambleChoiceState", "Completed")
+        ExMessageToScreen("BRAMBLE: Hero won the battle")
+        -- Spore quest requires negotiation. Killing the thief destroys that route.
+        return 1
+    end
+
+    -- Same confirmed battle-refusal reset pattern as Lesson 19.
+    ExSetVariable("BrambleChoiceState", "Cooling")
+    bramble_home_x = ExGetVariable("BrambleHomeX")
+    bramble_home_y = ExGetVariable("BrambleHomeY")
+    bramble_start_x = ExGetVariable("BrambleHeroStartX")
+    bramble_start_y = ExGetVariable("BrambleHeroStartY")
+
+    if bramble_home_x ~= nil and bramble_home_y ~= nil then
+        ExJumpToPos(bramble_id, bramble_home_x, bramble_home_y)
+        ExMessageToScreen("BRAMBLE RESET: Returned home")
+    end
+    if bramble_start_x ~= nil and bramble_start_y ~= nil then
+        ExJumpToPos(bramble_hero, bramble_start_x, bramble_start_y)
+    end
+    ExAddCommandCameraToObject(bramble_hero, 0)
+    return 0
+end
+
+function Bramble_OnPreUse(object_id, hero_id)
+    if ExGetVariable("BrambleChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("BrambleRuntimeId") then
+        if ExGetVariable("SporeQuestSkipBrambleGreeting") == 1 then
+            ExSetVariable("HoneyQuestSkipBrambleGreeting", 0)
+            return 0
+        end
+        ExMessageToScreen("BRAMBLE TEST: Peaceful PreUse intercepted")
+        ExAddCommandText(
+            object_id, "We have an understanding. Keep my hiding place secret.", 0
+        )
+        return 0
+    end
+    return nil
+end
+
+-- Lesson 25: self-register by callback names (save/load-safe).
+EncounterRegistry_Register("Bramble", "BrambleRuntimeId", "BrambleChoiceState",
+    "Bramble_OnStep", "Bramble_OnCloseMessageBox",
+    "Bramble_OnBattleFinishing", "Bramble_OnPreUse")
+-- END
+
+-- BEGIN src/encounters/grumble.lua
+-- LESSON 21: Grumble independent encounter
+-- Map position (15,10), Grumble belongs to P3 (with P3 Main Tower).
+-- All runtime global scratch variables and stored state are Grumble-prefixed.
+
+function Grumble_OnStep()
+    grumble_state = ExGetVariable("GrumbleChoiceState")
+    grumble_hero = ExGetMainHeroID()
+
+    if grumble_state == "Cooling" then
+        if CalcDistanceObjectPoint(grumble_hero, 15, 10) >= 3 then
+            ExSetVariable("GrumbleChoiceState", "Ready")
+            ExMessageToScreen("GRUMBLE RESET: Encounter rearmed")
+        end
+        return
+    end
+    if grumble_state ~= nil and grumble_state ~= "Ready" then
+        return
+    end
+    if CalcDistanceObjectPoint(grumble_hero, 15, 10) >= 3 then
+        return
+    end
+
+    -- Guard against overlapping scripted cinematics.
+    grumble_bee_state = ExGetVariable("BeeChoiceState")
+    if grumble_bee_state == "Intro" or grumble_bee_state == "Question"
+       or grumble_bee_state == "Hostile" or grumble_bee_state == "Charging" then
+        return
+    end
+
+    grumble_id = nil
+    grumble_distance = 9999
+    for grumble_index = 0, ExGetMobCount() - 1 do
+        grumble_candidate = ExGetMobByIndex(grumble_index)
+        grumble_current_distance = CalcDistanceObjectPoint(
+            grumble_candidate, 15, 10
+        )
+        if grumble_current_distance < grumble_distance then
+            grumble_id = grumble_candidate
+            grumble_distance = grumble_current_distance
+        end
+    end
+    if grumble_id == nil or grumble_distance > 2 then
+        ExSetVariable("GrumbleChoiceState", "NotFound")
+        ExMessageToScreen("GRUMBLE ERROR: Cannot find monster near (15,10)")
+        return
+    end
+
+    grumble_home_x, grumble_home_y = ExGetPos(grumble_id)
+    grumble_start_x, grumble_start_y = ExGetPos(grumble_hero)
+    ExSetVariable("GrumbleRuntimeId", grumble_id)
+    ExSetVariable("GrumbleHomeX", grumble_home_x)
+    ExSetVariable("GrumbleHomeY", grumble_home_y)
+    ExSetVariable("GrumbleHeroStartX", grumble_start_x)
+    ExSetVariable("GrumbleHeroStartY", grumble_start_y)
+    ExSetVariable("GrumbleChoiceState", "Intro")
+
+    ExSoftAbortCmd(grumble_hero)
+    ExAbortAllCommand()
+    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 0)
+    ExAddCommandText(grumble_hero, "I am just exploring.", 0)
+    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 0)
+    ExAddCommandExecuteScriptFunction("Grumble_AskQuestion")
+end
+
+function Grumble_AskQuestion()
+    ExSetVariable("GrumbleChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "How do you answer Grumble?\n\nYES = Offer a truce\nNO = Challenge him",
+        0
+    )
+end
+
+function Grumble_OnCloseMessageBox(callback)
+    if ExGetVariable("GrumbleChoiceState") ~= "Question" then
+        return
+    end
+    if callback == "OK" then
+        ExSetVariable("GrumbleChoiceState", "Peaceful")
+        -- Lesson 22: no faction-wide change; Grumble is on P2.
+        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 0)
+        ExAddCommandText(
+            ExGetVariable("GrumbleRuntimeId"),
+            "Hmph. Fine. You may pass without a fight.", 0
+        )
+    else
+        ExSetVariable("GrumbleChoiceState", "Hostile")
+        -- Lesson 22: Grumble shares hostile P2 faction with Bee.
+        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 0)
+        ExAddCommandText(
+            ExGetVariable("GrumbleRuntimeId"),
+            "HA! Finally, a worthy opponent! Prepare yourself!", 0
+        )
+        ExAddCommandExecuteScriptFunction("Grumble_LaunchAttack")
+    end
+end
+
+function Grumble_LaunchAttack()
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    grumble_hero = ExGetMainHeroID()
+    if grumble_id == nil then
+        return
+    end
+    ExSetVariable("GrumbleChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(grumble_id, grumble_hero)
+    ExAddCommandCameraToObject(grumble_id, 0)
+    grumble_attack_id = ExAddCommandMoveAndUseObject(
+        grumble_id, grumble_hero
+    )
+    ExSetVariable("GrumbleAttackCommand", grumble_attack_id)
+end
+
+function Grumble_IsBattle(attacker_id, target_id)
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    if grumble_id == nil then
+        return 0
+    end
+    if attacker_id == grumble_id or target_id == grumble_id then
+        return 1
+    end
+    return 0
+end
+
+function Grumble_OnBattleFinishing(attacker_id, target_id, winner_id)
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    grumble_hero = ExGetMainHeroID()
+    if grumble_id == nil then
+        return 1
+    end
+    if ExGetVariable("GrumbleChoiceState") ~= "Charging" then
+        return 1
+    end
+
+    ExMessageToScreen(
+        "GRUMBLE BATTLE: W=" .. tostring(winner_id)
+    )
+    if winner_id == grumble_hero then
+        ExSetVariable("GrumbleChoiceState", "Completed")
+        ExMessageToScreen("GRUMBLE: Hero won the battle")
+        return 1
+    end
+
+    -- Same confirmed battle-refusal reset pattern as Lesson 19.
+    ExSetVariable("GrumbleChoiceState", "Cooling")
+    grumble_home_x = ExGetVariable("GrumbleHomeX")
+    grumble_home_y = ExGetVariable("GrumbleHomeY")
+    grumble_start_x = ExGetVariable("GrumbleHeroStartX")
+    grumble_start_y = ExGetVariable("GrumbleHeroStartY")
+
+    if grumble_home_x ~= nil and grumble_home_y ~= nil then
+        ExJumpToPos(grumble_id, grumble_home_x, grumble_home_y)
+        ExMessageToScreen("GRUMBLE RESET: Returned home")
+    end
+    if grumble_start_x ~= nil and grumble_start_y ~= nil then
+        ExJumpToPos(grumble_hero, grumble_start_x, grumble_start_y)
+    end
+    ExAddCommandCameraToObject(grumble_hero, 0)
+    return 0
+end
+
+function Grumble_OnPreUse(object_id, hero_id)
+    if ExGetVariable("GrumbleChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("GrumbleRuntimeId") then
+        if ExGetVariable("HoneyQuestSkipGrumbleGreeting") == 1 then
+            ExSetVariable("HoneyQuestSkipGrumbleGreeting", 0)
+            return 0
+        end
+        ExMessageToScreen("GRUMBLE TEST: Peaceful PreUse intercepted")
+        ExAddCommandText(
+            object_id, "Hmph. A deal is a deal. Pass in peace.", 0
+        )
+        return 0
+    end
+    return nil
+end
+
+-- Lesson 24: self-register at script initialization.
+EncounterRegistry_Register("Grumble", "GrumbleRuntimeId", "GrumbleChoiceState",
+    "Grumble_OnStep", "Grumble_OnCloseMessageBox",
+    "Grumble_OnBattleFinishing", "Grumble_OnPreUse")
+-- END
+
+-- BEGIN src/encounters/moss.lua
+-- LESSON 25: Moss sample encounter built from the tested Grumble pattern
+-- Map position (10,16). Moss belongs to P2, alongside Bee and Grumble.
+-- All runtime global scratch variables and stored state are Moss-prefixed.
+
+function Moss_OnStep()
+    moss_state = ExGetVariable("MossChoiceState")
+    moss_hero = ExGetMainHeroID()
+
+    if moss_state == "Cooling" then
+        if CalcDistanceObjectPoint(moss_hero, 10, 16) >= 3 then
+            ExSetVariable("MossChoiceState", "Ready")
+            ExMessageToScreen("MOSS RESET: Encounter rearmed")
+        end
+        return
+    end
+    if moss_state ~= nil and moss_state ~= "Ready" then
+        return
+    end
+    if CalcDistanceObjectPoint(moss_hero, 10, 16) >= 3 then
+        return
+    end
+
+    -- Guard against overlapping scripted cinematics.
+    moss_bee_state = ExGetVariable("BeeChoiceState")
+    if moss_bee_state == "Intro" or moss_bee_state == "Question"
+       or moss_bee_state == "Hostile" or moss_bee_state == "Charging" then
+        return
+    end
+    moss_grumble_state = ExGetVariable("GrumbleChoiceState")
+    if moss_grumble_state == "Intro" or moss_grumble_state == "Question"
+       or moss_grumble_state == "Hostile" or moss_grumble_state == "Charging" then
+        return
+    end
+
+    moss_id = nil
+    moss_distance = 9999
+    for moss_index = 0, ExGetMobCount() - 1 do
+        moss_candidate = ExGetMobByIndex(moss_index)
+        moss_current_distance = CalcDistanceObjectPoint(
+            moss_candidate, 10, 16
+        )
+        if moss_current_distance < moss_distance then
+            moss_id = moss_candidate
+            moss_distance = moss_current_distance
+        end
+    end
+    if moss_id == nil or moss_distance > 2 then
+        ExSetVariable("MossChoiceState", "NotFound")
+        ExMessageToScreen("MOSS ERROR: Cannot find monster near (10,16)")
+        return
+    end
+
+    moss_home_x, moss_home_y = ExGetPos(moss_id)
+    moss_start_x, moss_start_y = ExGetPos(moss_hero)
+    ExSetVariable("MossRuntimeId", moss_id)
+    ExSetVariable("MossHomeX", moss_home_x)
+    ExSetVariable("MossHomeY", moss_home_y)
+    ExSetVariable("MossHeroStartX", moss_start_x)
+    ExSetVariable("MossHeroStartY", moss_start_y)
+    ExSetVariable("MossChoiceState", "Intro")
+
+    ExSoftAbortCmd(moss_hero)
+    ExAbortAllCommand()
+    ExAddCommandText(moss_id, "Oh! Someone's walking through my mushroom patch!", 0)
+    ExAddCommandText(moss_hero, "I didn't mean to disturb your garden.", 0)
+    ExAddCommandText(moss_id, "Will you protect these mushrooms, or trample them?", 0)
+    ExAddCommandExecuteScriptFunction("Moss_AskQuestion")
+end
+
+function Moss_AskQuestion()
+    ExSetVariable("MossChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "What do you promise Moss?\n\nYES = Protect the mushrooms\nNO = Trample the mushrooms",
+        0
+    )
+end
+
+function Moss_OnCloseMessageBox(callback)
+    if ExGetVariable("MossChoiceState") ~= "Question" then
+        return
+    end
+    if callback == "OK" then
+        ExSetVariable("MossChoiceState", "Peaceful")
+        -- Shared P2 faction stays hostile; peaceful state is object-specific.
+        ExAddCommandText(ExGetMainHeroID(), "I'll leave every mushroom untouched.", 0)
+        ExAddCommandText(
+            ExGetVariable("MossRuntimeId"),
+            "Oh, wonderful! The mushrooms thank you!", 0
+        )
+    else
+        ExSetVariable("MossChoiceState", "Hostile")
+        -- Shared P2 faction stays hostile; do not change faction hostility.
+        ExAddCommandText(ExGetMainHeroID(), "These mushrooms look like excellent stepping stones!", 0)
+        ExAddCommandText(
+            ExGetVariable("MossRuntimeId"),
+            "Not one step further! Defend the mushroom kingdom!", 0
+        )
+        ExAddCommandExecuteScriptFunction("Moss_LaunchAttack")
+    end
+end
+
+function Moss_LaunchAttack()
+    moss_id = ExGetVariable("MossRuntimeId")
+    moss_hero = ExGetMainHeroID()
+    if moss_id == nil then
+        return
+    end
+    ExSetVariable("MossChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(moss_id, moss_hero)
+    ExAddCommandCameraToObject(moss_id, 0)
+    moss_attack_id = ExAddCommandMoveAndUseObject(
+        moss_id, moss_hero
+    )
+    ExSetVariable("MossAttackCommand", moss_attack_id)
+end
+
+function Moss_IsBattle(attacker_id, target_id)
+    moss_id = ExGetVariable("MossRuntimeId")
+    if moss_id == nil then
+        return 0
+    end
+    if attacker_id == moss_id or target_id == moss_id then
+        return 1
+    end
+    return 0
+end
+
+function Moss_OnBattleFinishing(attacker_id, target_id, winner_id)
+    moss_id = ExGetVariable("MossRuntimeId")
+    moss_hero = ExGetMainHeroID()
+    if moss_id == nil then
+        return 1
+    end
+    if ExGetVariable("MossChoiceState") ~= "Charging" then
+        return 1
+    end
+
+    ExMessageToScreen(
+        "MOSS BATTLE: W=" .. tostring(winner_id)
+    )
+    if winner_id == moss_hero then
+        ExSetVariable("MossChoiceState", "Completed")
+        ExMessageToScreen("MOSS: Hero won the battle")
+        return 1
+    end
+
+    -- Same confirmed battle-refusal reset pattern as Lesson 19.
+    ExSetVariable("MossChoiceState", "Cooling")
+    moss_home_x = ExGetVariable("MossHomeX")
+    moss_home_y = ExGetVariable("MossHomeY")
+    moss_start_x = ExGetVariable("MossHeroStartX")
+    moss_start_y = ExGetVariable("MossHeroStartY")
+
+    if moss_home_x ~= nil and moss_home_y ~= nil then
+        ExJumpToPos(moss_id, moss_home_x, moss_home_y)
+        ExMessageToScreen("MOSS RESET: Returned home")
+    end
+    if moss_start_x ~= nil and moss_start_y ~= nil then
+        ExJumpToPos(moss_hero, moss_start_x, moss_start_y)
+    end
+    ExAddCommandCameraToObject(moss_hero, 0)
+    return 0
+end
+
+function Moss_OnPreUse(object_id, hero_id)
+    if ExGetVariable("MossChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("MossRuntimeId") then
+        if ExGetVariable("HoneyQuestSkipMossGreeting") == 1 then
+            ExSetVariable("HoneyQuestSkipMossGreeting", 0)
+            return 0
+        end
+        ExMessageToScreen("MOSS TEST: Peaceful PreUse intercepted")
+        return SporeQuest_MossInteraction(object_id, hero_id)
+    end
+    return nil
+end
+
+-- Lesson 25: self-register by callback names (save/load-safe).
+EncounterRegistry_Register("Moss", "MossRuntimeId", "MossChoiceState",
+    "Moss_OnStep", "Moss_OnCloseMessageBox",
+    "Moss_OnBattleFinishing", "Moss_OnPreUse")
+-- END
+
+-- BEGIN src/quests/missing_honey.lua
+-- LESSON 27: The Queen's Missing Honey.
+-- Quest coordination only. Encounter combat/reward functions stay unchanged.
+-- All durable quest state lives in ExSetVariable (not Lua tables/functions).
+--
+-- Stages: nil = not started, 1 = investigate Grumble,
+--         2 = recover honey from Moss, 3 = return to Bee, 4 = complete.
+-- Peaceful OR Completed (hero won combat) counts as resolved.
+-- Refusing a battle / Cooling / Ready does NOT count.
+
+function HoneyQuest_BeeInteraction(object_id, hero_id)
+    honey_stage = ExGetVariable("HoneyQuestStage")
+    if honey_stage == nil then
+        ExSetVariable("HoneyQuestStage", 1)
+        ExAddCommandText(object_id,
+            "BZZ! I need your help. Someone stole my royal honey!", 1)
+        ExAddCommandText(object_id,
+            "Question Grumble. He was seen by my hive!", 1)
+        ExAddCommandText(hero_id,
+            "I will investigate the missing honey, Your Buzziness.", 1)
+        ExMessageToScreen("QUEST: Missing Honey - Question Grumble")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage1")
+        return 0
+    end
+    if honey_stage == 1 then
+        ExAddCommandText(object_id,
+            "BZZ! Grumble knows something. Please question him!", 0)
+        return 0
+    end
+    if honey_stage == 2 then
+        ExAddCommandText(object_id,
+            "BZZ! Find Moss! My royal honey is still missing!", 0)
+        return 0
+    end
+    if honey_stage == 3 then
+        -- Mark paid before triggering reward commands to prevent duplicates
+        -- across interrupted dialogs, saving/loading, or repeated clicks.
+        ExSetVariable("HoneyQuestStage", 4)
+        ExAddCommandText(hero_id,
+            "Moss had the honey. I have brought it back!", 1)
+        ExAddCommandText(object_id,
+            "BZZZZ! The hive is saved! Accept my royal reward!", 1)
+        ExAddCommandExecuteScriptFunction("HoneyQuest_Reward")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage3")
+        ExMessageToScreen("QUEST COMPLETE: The Queen's Missing Honey")
+        return 0
+    end
+    if honey_stage == 4 then
+        ExAddCommandText(object_id,
+            "BZZ! My royal honey is safe, thanks to you!", 0)
+        return 0
+    end
+    return nil
+end
+
+function HoneyQuest_Reward()
+    if ExGetVariable("HoneyQuestRewardReceived") == 1 then
+        return
+    end
+    ExSetVariable("HoneyQuestRewardReceived", 1)
+    -- A known working spell reward API, separate from BeeGiftReceived.
+    ExAddSpell(ExGetMainHeroID(), "ASLT")
+    ExStartLootMessage()
+    ExAddLootMessageSpell("ASLT")
+    ExSendLootMessage()
+end
+
+function HoneyQuest_Resolved(state)
+    if state == "Peaceful" or state == "Completed" then
+        return 1
+    end
+    return 0
+end
+
+function HoneyQuest_OnStep()
+    honey_stage = ExGetVariable("HoneyQuestStage")
+    if honey_stage == nil or honey_stage == 3 or honey_stage == 4 then
+        return
+    end
+
+    -- Do not enqueue quest narration in the middle of an encounter's
+    -- scripted dialogue, charge or battle transition.
+    if ExGetCommandQueueSize() > 0 then
+        return
+    end
+    honey_bee_state = ExGetVariable("BeeChoiceState")
+    honey_grumble_state = ExGetVariable("GrumbleChoiceState")
+    honey_moss_state = ExGetVariable("MossChoiceState")
+    if honey_bee_state == "Intro" or honey_bee_state == "Question"
+       or honey_bee_state == "Hostile" or honey_bee_state == "Charging"
+       or honey_grumble_state == "Intro" or honey_grumble_state == "Question"
+       or honey_grumble_state == "Hostile" or honey_grumble_state == "Charging"
+       or honey_moss_state == "Intro" or honey_moss_state == "Question"
+       or honey_moss_state == "Hostile" or honey_moss_state == "Charging" then
+        return
+    end
+
+    -- A previously resolved NPC does not remotely deliver quest clues.
+    -- The hero must visit the NPC's area after the quest reaches this stage.
+    if honey_stage == 1 and HoneyQuest_Resolved(honey_grumble_state) == 1
+       and CalcDistanceObjectPoint(ExGetMainHeroID(), 15, 10) < 3 then
+        ExSetVariable("HoneyQuestStage", 2)
+        honey_grumble_id = ExGetVariable("GrumbleRuntimeId")
+        if honey_grumble_state == "Peaceful" and honey_grumble_id ~= nil then
+            -- The movement click which brought the hero here may still
+            -- invoke OnPreUse after this queued quest narration.
+            -- Consume that extra greeting once, not permanently.
+            ExSetVariable("HoneyQuestSkipGrumbleGreeting", 1)
+            ExAddCommandText(honey_grumble_id,
+                "I traded the Queen's honey to Moss for rare mushrooms!", 0)
+        else
+            ExAddCommandText(ExGetMainHeroID(),
+                "Grumble's belongings reveal a honey trade with Moss.", 0)
+        end
+        ExMessageToScreen("QUEST: Clue found - Find Moss")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage2")
+        return
+    end
+
+    if honey_stage == 2 and HoneyQuest_Resolved(honey_moss_state) == 1
+       and CalcDistanceObjectPoint(ExGetMainHeroID(), 10, 16) < 3 then
+        ExSetVariable("HoneyQuestStage", 3)
+        ExSetVariable("HoneyQuestHoneyRecovered", 1)
+        honey_moss_id = ExGetVariable("MossRuntimeId")
+        if honey_moss_state == "Peaceful" and honey_moss_id ~= nil then
+            ExSetVariable("HoneyQuestSkipMossGreeting", 1)
+            ExAddCommandText(honey_moss_id,
+                "The honey? Of course! Please return it to the Queen.", 0)
+        else
+            ExAddCommandText(ExGetMainHeroID(),
+                "I recovered the Queen's honey among Moss's belongings.", 0)
+        end
+        ExMessageToScreen("QUEST: Honey recovered - Return to Bee")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_StageRecovered")
+        return
+    end
+end
+-- END
+
+-- BEGIN src/quests/stolen_spores.lua
+-- LESSON 29: A second, independent, missable quest.
+-- Moss must be peaceful/alive. Bramble at (1,16) is intentionally overwhelming.
+-- Durable flags ONLY via ExSetVariable; no Lua function objects in saved state.
+-- SporeQuestStage: nil unavailable/not offered, 1 find Bramble,
+--   2 return to Moss, 3 complete, 4 failed.
+-- Bramble peaceful negotiation is REQUIRED. Victory is not a substitute.
+
+function SporeQuest_MossInteraction(object_id, hero_id)
+    spore_stage = ExGetVariable("SporeQuestStage")
+    spore_moss_state = ExGetVariable("MossChoiceState")
+    spore_bramble_state = ExGetVariable("BrambleChoiceState")
+
+    if spore_moss_state ~= "Peaceful" then
+        return nil
+    end
+    if spore_stage == nil then
+        if spore_bramble_state == "Completed" then
+            ExSetVariable("SporeQuestStage", 4)
+            ExAddCommandText(object_id,
+                "Oh no! Bramble is gone. My rare spores are lost forever.", 0)
+            ExAddCommandExecuteScriptFunction("SporeJournal_Failed")
+            return 0
+        end
+        ExSetVariable("SporeQuestStage", 1)
+        ExAddCommandText(object_id,
+            "Bramble stole my rare mushroom spores! Please bring them home.", 1)
+        ExAddCommandText(hero_id,
+            "I'll search for Bramble. Where is she hiding?", 0)
+        ExAddCommandText(object_id,
+            "Far to the west, behind the rocks. Please do not fight her!", 0)
+        ExAddCommandExecuteScriptFunction("SporeJournal_Accepted")
+        ExMessageToScreen("SIDE QUEST: The Stolen Mushroom Spores")
+        return 0
+    end
+    if spore_stage == 1 then
+        ExAddCommandText(object_id,
+            "Please find Bramble. She hides west behind the rocks.", 0)
+        return 0
+    end
+    if spore_stage == 2 then
+        if ExGetVariable("SporeQuestSporesRecovered") ~= 1 then
+            return 0
+        end
+        ExSetVariable("SporeQuestStage", 3)
+        ExAddCommandText(hero_id,
+            "I convinced Bramble to return your stolen mushroom spores.", 0)
+        ExAddCommandText(object_id,
+            "My spores! Thank you. These are precious beyond words.", 1)
+        ExAddCommandExecuteScriptFunction("SporeQuest_Reward")
+        ExAddCommandExecuteScriptFunction("SporeJournal_Completed")
+        ExMessageToScreen("SIDE QUEST COMPLETE: The Stolen Mushroom Spores")
+        return 0
+    end
+    if spore_stage == 3 then
+        ExAddCommandText(object_id,
+            "My mushroom spores are safe. Thank you again!", 0)
+        return 0
+    end
+    if spore_stage == 4 then
+        ExAddCommandText(object_id,
+            "The spores are lost. There is nothing more we can do.", 0)
+        return 0
+    end
+    return 0
+end
+
+function SporeQuest_Reward()
+    if ExGetVariable("SporeQuestRewardReceived") == 1 then
+        return
+    end
+    ExSetVariable("SporeQuestRewardReceived", 1)
+    -- Known working Etherlords II spell + loot notification.
+    ExAddSpell(ExGetMainHeroID(), "ALST")
+    ExStartLootMessage()
+    ExAddLootMessageSpell("ALST")
+    ExSendLootMessage()
+end
+
+function SporeQuest_OnStep()
+    spore_stage = ExGetVariable("SporeQuestStage")
+    if spore_stage == nil or spore_stage == 3 or spore_stage == 4 then
+        return
+    end
+
+    -- If later campaign mechanics ever allow Moss to die after a truce,
+    -- fail gracefully without touching the independent honey quest.
+    if ExGetVariable("MossChoiceState") == "Completed" then
+        ExSetVariable("SporeQuestStage", 4)
+        ExAddCommandExecuteScriptFunction("SporeJournal_Failed")
+        ExMessageToScreen("SIDE QUEST FAILED: Moss is gone")
+        return
+    end
+
+    if ExGetCommandQueueSize() > 0 then
+        return
+    end
+
+    spore_bramble_state = ExGetVariable("BrambleChoiceState")
+    spore_moss_state = ExGetVariable("MossChoiceState")
+    spore_bee_state = ExGetVariable("BeeChoiceState")
+    spore_grumble_state = ExGetVariable("GrumbleChoiceState")
+    if spore_bee_state == "Intro" or spore_bee_state == "Question"
+       or spore_bee_state == "Hostile" or spore_bee_state == "Charging"
+       or spore_grumble_state == "Intro" or spore_grumble_state == "Question"
+       or spore_grumble_state == "Hostile" or spore_grumble_state == "Charging"
+       or spore_moss_state == "Intro" or spore_moss_state == "Question"
+       or spore_moss_state == "Hostile" or spore_moss_state == "Charging"
+       or spore_bramble_state == "Intro" or spore_bramble_state == "Question"
+       or spore_bramble_state == "Hostile" or spore_bramble_state == "Charging" then
+        return
+    end
+
+    if spore_stage == 1 and spore_bramble_state == "Completed" then
+        ExSetVariable("SporeQuestStage", 4)
+        ExAddCommandText(ExGetMainHeroID(),
+            "Bramble was defeated. The fragile spores cannot be recovered.", 0)
+        ExAddCommandExecuteScriptFunction("SporeJournal_Failed")
+        ExMessageToScreen("SIDE QUEST FAILED: The spores were destroyed")
+        return
+    end
+
+    if spore_stage == 1 and spore_bramble_state == "Peaceful"
+       and CalcDistanceObjectPoint(ExGetMainHeroID(), 1, 16) < 3 then
+        ExSetVariable("SporeQuestStage", 2)
+        ExSetVariable("SporeQuestSporesRecovered", 1)
+        spore_bramble_id = ExGetVariable("BrambleRuntimeId")
+        if spore_bramble_id ~= nil then
+            ExSetVariable("SporeQuestSkipBrambleGreeting", 1)
+            ExAddCommandText(spore_bramble_id,
+                "Take the spores back to Moss. Keep our bargain secret.", 0)
+        end
+        ExAddCommandExecuteScriptFunction("SporeJournal_Recovered")
+        ExMessageToScreen("SIDE QUEST: Spores recovered - Return to Moss")
+        return
+    end
+end
+-- END
+
+-- BEGIN src/journal/honey_journal.lua
+-- LESSON 28 EXPERIMENT: native notebook / Events List.
+-- Official editor documentation says ExMessageBoxStandard(message, hero_id)
+-- adds an event to the notebook when the hero_id is supplied.
+-- This also displays an OK-message: observe whether the user sees both.
+-- Save-safe once-only flags; no function/table values in ExSetVariable.
+
+function HoneyJournal_Stage1()
+    if ExGetVariable("HoneyJournalEntry1") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalEntry1", 1)
+    ExMessageBoxStandard(
+        "The Queen's Missing Honey: Investigate Grumble. "
+        .. "Bluhblah's royal honey has disappeared. "
+        .. "Question Grumble about the theft.",
+        ExGetMainHeroID()
+    )
+end
+
+function HoneyJournal_Stage2()
+    if ExGetVariable("HoneyJournalEntry2") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalEntry2", 1)
+    ExMessageBoxStandard(
+        "A Suspicious Trade: Find Moss. "
+        .. "Grumble traded the Queen's honey to Moss for rare mushrooms. "
+        .. "Find Moss and recover the royal honey.",
+        ExGetMainHeroID()
+    )
+end
+
+function HoneyJournal_StageRecovered()
+    if ExGetVariable("HoneyJournalRecovered") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalRecovered", 1)
+    ExMessageBoxStandard(
+        "Royal Honey Recovered: Return to the Queen. "
+        .. "Moss has surrendered the missing honey. "
+        .. "Bring it back to bluhblah for your reward.",
+        ExGetMainHeroID()
+    )
+end
+
+function HoneyJournal_Stage3()
+    if ExGetVariable("HoneyJournalEntry3") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalEntry3", 1)
+    ExMessageBoxStandard(
+        "The Royal Honey Returned: Quest complete. "
+        .. "The honey has been recovered and returned to bluhblah. "
+        .. "The Queen has rewarded her Royal Investigator.",
+        ExGetMainHeroID()
+    )
+end
+-- END
+
+-- BEGIN src/journal/spore_journal.lua
+-- LESSON 29 side quest journal: native Events List, once per stage.
+-- Each ExMessageBoxStandard writes a save-persistent event for the player.
+
+function SporeJournal_Accepted()
+    if ExGetVariable("SporeJournalAccepted") == 1 then
+        return
+    end
+    ExSetVariable("SporeJournalAccepted", 1)
+    ExMessageBoxStandard(
+        "The Stolen Mushroom Spores: Find Bramble. "
+        .. "Moss needs rare spores stolen by a powerful thief. "
+        .. "Bramble hides behind rocks to the west. Negotiate; do not fight.",
+        ExGetMainHeroID()
+    )
+end
+
+function SporeJournal_Recovered()
+    if ExGetVariable("SporeJournalRecovered") == 1 then
+        return
+    end
+    ExSetVariable("SporeJournalRecovered", 1)
+    ExMessageBoxStandard(
+        "Spores Recovered: Return to Moss. "
+        .. "Bramble agreed to surrender the spores peacefully. "
+        .. "Bring them back to Moss to finish the side quest.",
+        ExGetMainHeroID()
+    )
+end
+
+function SporeJournal_Completed()
+    if ExGetVariable("SporeJournalCompleted") == 1 then
+        return
+    end
+    ExSetVariable("SporeJournalCompleted", 1)
+    ExMessageBoxStandard(
+        "The Stolen Mushroom Spores: Completed. "
+        .. "Moss received her rare spores and rewarded your diplomacy.",
+        ExGetMainHeroID()
+    )
+end
+
+function SporeJournal_Failed()
+    if ExGetVariable("SporeJournalFailed") == 1 then
+        return
+    end
+    ExSetVariable("SporeJournalFailed", 1)
+    ExMessageBoxStandard(
+        "The Stolen Mushroom Spores: Failed. "
+        .. "The peaceful path was lost. The rare spores cannot be returned.",
+        ExGetMainHeroID()
+    )
+end
+-- END
+
+-- BEGIN src/shared/save_load_diagnostics.lua
+-- LESSON 23: passive save/load diagnostics.
+-- Temporary Lua globals are not placed into ExSetVariable.
+-- This detects initial script execution and observed state transitions.
+Lesson23_LastBee = nil
+Lesson23_LastGrumble = nil
+Lesson23_Initialized = nil
+
+function Lesson23_DiagnosticStep()
+    lesson23_bee = ExGetVariable("BeeChoiceState")
+    lesson23_grumble = ExGetVariable("GrumbleChoiceState")
+
+    if Lesson23_Initialized == nil then
+        Lesson23_Initialized = 1
+        ExMessageToScreen(
+            "L23 START Bee=" .. tostring(lesson23_bee)
+            .. " Grumble=" .. tostring(lesson23_grumble)
+            .. " Gift=" .. tostring(ExGetVariable("BeeGiftReceived"))
+        )
+    end
+
+    if lesson23_bee ~= Lesson23_LastBee then
+        Lesson23_LastBee = lesson23_bee
+        ExMessageToScreen("L23 STATE Bee=" .. tostring(lesson23_bee))
+    end
+
+    if lesson23_grumble ~= Lesson23_LastGrumble then
+        Lesson23_LastGrumble = lesson23_grumble
+        ExMessageToScreen("L23 STATE Grumble=" .. tostring(lesson23_grumble))
+    end
+end
+-- END
+
+-- BEGIN src/shared/hook_router.lua
+-- LESSON 24: unchanged engine API; generic registered encounter routing.
+-- Five engine hooks total. No Bee or Grumble references in this file.
+
+function Hook_OnStep()
+    Lesson23_DiagnosticStep()
+    EncounterRegistry_OnStep()
+    HoneyQuest_OnStep()
+    SporeQuest_OnStep()
+end
+
+function Hook_OnCloseMessageBox(callback)
+    EncounterRegistry_OnCloseMessageBox(callback)
+end
+
+function Hook_OnBattleFinishing(attacker_id, target_id, winner_id)
+    return EncounterRegistry_OnBattleFinishing(
+        attacker_id, target_id, winner_id
+    )
+end
+
+function Hook_OnPreUse(object_id, hero_id)
+    return EncounterRegistry_OnPreUse(object_id, hero_id)
+end
+
+function Hook_OnIntercept(hero_id, interceptor_id)
+    return EncounterRegistry_OnIntercept(hero_id, interceptor_id)
+end
+-- END
