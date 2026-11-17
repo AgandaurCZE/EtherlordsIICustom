@@ -1,0 +1,519 @@
+-- GENERATED: Lesson 24 registry test (Lua 4)
+
+-- BEGIN src/shared/encounter_registry.lua
+-- LESSON 24: Lua 4 compatible encounter registry.
+-- Keep function references in Lua memory; gameplay state remains in ExSetVariable.
+-- Load this module BEFORE any encounter source registers itself.
+EncounterRegistry_Entries = {}
+EncounterRegistry_Count = 0
+
+function EncounterRegistry_Register(name, runtime_key, state_key,
+    on_step, on_close, on_battle, on_preuse)
+    EncounterRegistry_Count = EncounterRegistry_Count + 1
+    EncounterRegistry_Entries[EncounterRegistry_Count] = {
+        name = name,
+        runtime_key = runtime_key,
+        state_key = state_key,
+        on_step = on_step,
+        on_close = on_close,
+        on_battle = on_battle,
+        on_preuse = on_preuse
+    }
+end
+
+function EncounterRegistry_OnStep()
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_entry.on_step()
+    end
+end
+
+function EncounterRegistry_OnCloseMessageBox(callback)
+    -- Keep former behavior: each handler ignores callbacks unless
+    -- its own state is "Question".
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_entry.on_close(callback)
+    end
+end
+
+function EncounterRegistry_OnBattleFinishing(attacker_id, target_id, winner_id)
+    -- Preserve Lesson 23 dispatch priority: Grumble (registered second)
+    -- before Bee. Only one battle handler is allowed to handle a fight.
+    for registry_index = EncounterRegistry_Count, 1, -1 do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_id = ExGetVariable(registry_entry.runtime_key)
+        if registry_id ~= nil and
+           (attacker_id == registry_id or target_id == registry_id) then
+            return registry_entry.on_battle(attacker_id, target_id, winner_id)
+        end
+    end
+    return 1
+end
+
+function EncounterRegistry_OnPreUse(object_id, hero_id)
+    -- Preserve Lesson 23 dispatch priority: Bee before Grumble.
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_answer = registry_entry.on_preuse(object_id, hero_id)
+        if registry_answer ~= nil then
+            return registry_answer
+        end
+    end
+    return 1
+end
+
+function EncounterRegistry_OnIntercept(hero_id, interceptor_id)
+    if hero_id ~= ExGetMainHeroID() then
+        return 1
+    end
+
+    for registry_index = 1, EncounterRegistry_Count do
+        registry_entry = EncounterRegistry_Entries[registry_index]
+        registry_id = ExGetVariable(registry_entry.runtime_key)
+        if registry_id ~= nil and interceptor_id == registry_id and
+           ExGetVariable(registry_entry.state_key) == "Peaceful" then
+
+            registry_debug_key = registry_entry.name .. "InterceptDebug"
+            if ExGetVariable(registry_debug_key) ~= 1 then
+                ExSetVariable(registry_debug_key, 1)
+                ExMessageToScreen(
+                    registry_entry.name ..
+                    " TEST: Peaceful intercept blocked"
+                )
+            end
+            return 0
+        end
+    end
+    return 1
+end
+-- END
+
+-- BEGIN src/encounters/bee_queen.lua
+-- Bee Queen encounter, extracted from working Lesson 19.
+-- Only Bee_* functions are defined here; engine hooks live in hook_router.lua.
+-- IMPORTANT: keep variable persistence through ExSetVariable/ExGetVariable.
+
+function Bee_OnStep()
+    state = ExGetVariable("BeeChoiceState")
+    hero_id = ExGetMainHeroID()
+
+    if state == "Cooling" then
+        if CalcDistanceObjectPoint(hero_id, 7, 5) >= 3 then
+            ExSetVariable("BeeChoiceState", "Ready")
+            ExMessageToScreen("BEE RESET: Encounter rearmed")
+        end
+        return
+    end
+
+    if state ~= nil and state ~= "Ready" then
+        return
+    end
+
+    if CalcDistanceObjectPoint(hero_id, 7, 5) >= 3 then
+        return
+    end
+
+    bee_id = nil
+    bee_distance = 9999
+    for i = 0, ExGetMobCount() - 1 do
+        mob_id = ExGetMobByIndex(i)
+        mob_distance = CalcDistanceObjectPoint(mob_id, 7, 5)
+        if mob_distance < bee_distance then
+            bee_distance = mob_distance
+            bee_id = mob_id
+        end
+    end
+
+    if bee_id == nil or bee_distance > 2 then
+        ExSetVariable("BeeChoiceState", "NotFound")
+        ExMessageToScreen("Bee not found!")
+        return
+    end
+
+    bee_x, bee_y = ExGetPos(bee_id)
+    hero_x, hero_y = ExGetPos(hero_id)
+    ExSetVariable("BeeRuntimeId", bee_id)
+    ExSetVariable("BeeHomeX", bee_x)
+    ExSetVariable("BeeHomeY", bee_y)
+    ExSetVariable("BeeHeroStartX", hero_x)
+    ExSetVariable("BeeHeroStartY", hero_y)
+    ExSetVariable("BeeChoiceState", "Intro")
+
+    ExSoftAbortCmd(hero_id)
+    ExAbortAllCommand()
+    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 1)
+    ExAddCommandText(hero_id, "I was just passing through!", 1)
+    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 1)
+    ExAddCommandExecuteScriptFunction("Bee_AskQuestion")
+end
+
+function Bee_AskQuestion()
+    ExSetVariable("BeeChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "Will you apologize to the Queen of Bees?\n\nYES = Apologize\nNO = Insult",
+        0
+    )
+end
+
+function Bee_OnCloseMessageBox(callback)
+    if ExGetVariable("BeeChoiceState") ~= "Question" then
+        return
+    end
+
+    if callback == "OK" then
+        ExSetVariable("BeeChoiceState", "Peaceful")
+        -- Lesson 22: no faction-wide change; keep P1/P2 hostile.
+        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 1)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 1)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 1)
+        ExAddCommandExecuteScriptFunction("Bee_GiveGift")
+    else
+        ExSetVariable("BeeChoiceState", "Hostile")
+        -- Lesson 22: P1/P2 remains hostile for native battle initiation.
+        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 1)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 1)
+        ExAddCommandExecuteScriptFunction("Bee_LaunchAttack")
+    end
+end
+
+function Bee_GiveGift()
+    if ExGetVariable("BeeGiftReceived") == 1 then
+        return
+    end
+    ExSetVariable("BeeGiftReceived", 1)
+    gift_roll = 1
+    if random ~= nil then
+        gift_roll = random(2)
+    end
+    gift_code = "ALST"
+    if gift_roll == 2 then
+        gift_code = "ASLT"
+    end
+    ExAddSpell(ExGetMainHeroID(), gift_code)
+    ExStartLootMessage()
+    ExAddLootMessageSpell(gift_code)
+    ExSendLootMessage()
+end
+
+function Bee_LaunchAttack()
+    bee_id = ExGetVariable("BeeRuntimeId")
+    hero_id = ExGetMainHeroID()
+    if bee_id == nil then
+        return
+    end
+    ExSetVariable("BeeChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(bee_id, hero_id)
+    ExAddCommandCameraToObject(bee_id, 0)
+    attack_id = ExAddCommandMoveAndUseObject(bee_id, hero_id)
+    ExSetVariable("BeeAttackCommand", attack_id)
+end
+
+-- Returns engine 'accept' value (0/1) for this bee battle,
+-- or nil if the battle is unrelated. Keep Lesson 19 outcome logic.
+function Bee_OnBattleFinishing(attacker_id, target_id, winner_id)
+    ExMessageToScreen(
+        "BATTLE HOOK: A=" .. tostring(attacker_id) ..
+        " T=" .. tostring(target_id) ..
+        " W=" .. tostring(winner_id)
+    )
+
+    bee_id = ExGetVariable("BeeRuntimeId")
+    hero_id = ExGetMainHeroID()
+
+    if bee_id == nil then
+        return 1
+    end
+    if attacker_id ~= bee_id and target_id ~= bee_id then
+        return 1
+    end
+    if ExGetVariable("BeeChoiceState") ~= "Charging" then
+        return 1
+    end
+    if winner_id == hero_id then
+        ExSetVariable("BeeChoiceState", "Completed")
+        ExMessageToScreen("BEE: Hero won the battle")
+        return 1
+    end
+
+    ExMessageToScreen("BEE RESET: Beginning rollback")
+    ExSetVariable("BeeChoiceState", "Cooling")
+    home_x = ExGetVariable("BeeHomeX")
+    home_y = ExGetVariable("BeeHomeY")
+    start_x = ExGetVariable("BeeHeroStartX")
+    start_y = ExGetVariable("BeeHeroStartY")
+
+    if home_x ~= nil and home_y ~= nil then
+        ExJumpToPos(bee_id, home_x, home_y)
+        ExMessageToScreen("BEE RESET: Queen returned home")
+    end
+    if start_x ~= nil and start_y ~= nil then
+        ExJumpToPos(hero_id, start_x, start_y)
+        ExMessageToScreen("BEE RESET: Hero repositioned")
+    end
+    ExAddCommandCameraToObject(hero_id, 0)
+    return 0
+end
+
+-- Return nil for unrelated objects. Return 0/1 for handled bee interactions.
+function Bee_OnPreUse(object_id, hero_id)
+    if ExGetVariable("BeeChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("BeeRuntimeId") then
+        ExMessageToScreen("BEE TEST: Peaceful PreUse intercepted")
+        ExAddCommandText(object_id, "BZZ BZZ! Welcome back, friend of the Hive!", 1)
+        return 0
+    end
+    return nil
+end
+
+-- Lesson 24: self-register at script initialization.
+EncounterRegistry_Register("Bee", "BeeRuntimeId", "BeeChoiceState",
+    Bee_OnStep, Bee_OnCloseMessageBox, Bee_OnBattleFinishing, Bee_OnPreUse)
+-- END
+
+-- BEGIN src/encounters/grumble.lua
+-- LESSON 21: Grumble independent encounter
+-- Map position (15,10), Grumble belongs to P3 (with P3 Main Tower).
+-- All runtime global scratch variables and stored state are Grumble-prefixed.
+
+function Grumble_OnStep()
+    grumble_state = ExGetVariable("GrumbleChoiceState")
+    grumble_hero = ExGetMainHeroID()
+
+    if grumble_state == "Cooling" then
+        if CalcDistanceObjectPoint(grumble_hero, 15, 10) >= 3 then
+            ExSetVariable("GrumbleChoiceState", "Ready")
+            ExMessageToScreen("GRUMBLE RESET: Encounter rearmed")
+        end
+        return
+    end
+    if grumble_state ~= nil and grumble_state ~= "Ready" then
+        return
+    end
+    if CalcDistanceObjectPoint(grumble_hero, 15, 10) >= 3 then
+        return
+    end
+
+    -- Guard against overlapping scripted cinematics.
+    grumble_bee_state = ExGetVariable("BeeChoiceState")
+    if grumble_bee_state == "Intro" or grumble_bee_state == "Question"
+       or grumble_bee_state == "Hostile" or grumble_bee_state == "Charging" then
+        return
+    end
+
+    grumble_id = nil
+    grumble_distance = 9999
+    for grumble_index = 0, ExGetMobCount() - 1 do
+        grumble_candidate = ExGetMobByIndex(grumble_index)
+        grumble_current_distance = CalcDistanceObjectPoint(
+            grumble_candidate, 15, 10
+        )
+        if grumble_current_distance < grumble_distance then
+            grumble_id = grumble_candidate
+            grumble_distance = grumble_current_distance
+        end
+    end
+    if grumble_id == nil or grumble_distance > 2 then
+        ExSetVariable("GrumbleChoiceState", "NotFound")
+        ExMessageToScreen("GRUMBLE ERROR: Cannot find monster near (15,10)")
+        return
+    end
+
+    grumble_home_x, grumble_home_y = ExGetPos(grumble_id)
+    grumble_start_x, grumble_start_y = ExGetPos(grumble_hero)
+    ExSetVariable("GrumbleRuntimeId", grumble_id)
+    ExSetVariable("GrumbleHomeX", grumble_home_x)
+    ExSetVariable("GrumbleHomeY", grumble_home_y)
+    ExSetVariable("GrumbleHeroStartX", grumble_start_x)
+    ExSetVariable("GrumbleHeroStartY", grumble_start_y)
+    ExSetVariable("GrumbleChoiceState", "Intro")
+
+    ExSoftAbortCmd(grumble_hero)
+    ExAbortAllCommand()
+    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 1)
+    ExAddCommandText(grumble_hero, "I am just exploring.", 1)
+    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 1)
+    ExAddCommandExecuteScriptFunction("Grumble_AskQuestion")
+end
+
+function Grumble_AskQuestion()
+    ExSetVariable("GrumbleChoiceState", "Question")
+    ExAddCommandQuestion(
+        ExGetMainHeroID(),
+        "How do you answer Grumble?\n\nYES = Offer a truce\nNO = Challenge him",
+        0
+    )
+end
+
+function Grumble_OnCloseMessageBox(callback)
+    if ExGetVariable("GrumbleChoiceState") ~= "Question" then
+        return
+    end
+    if callback == "OK" then
+        ExSetVariable("GrumbleChoiceState", "Peaceful")
+        -- Lesson 22: no faction-wide change; Grumble is on P2.
+        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 1)
+        ExAddCommandText(
+            ExGetVariable("GrumbleRuntimeId"),
+            "Hmph. Fine. You may pass without a fight.",
+            1
+        )
+    else
+        ExSetVariable("GrumbleChoiceState", "Hostile")
+        -- Lesson 22: Grumble shares hostile P2 faction with Bee.
+        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 1)
+        ExAddCommandText(
+            ExGetVariable("GrumbleRuntimeId"),
+            "HA! Finally, a worthy opponent! Prepare yourself!",
+            1
+        )
+        ExAddCommandExecuteScriptFunction("Grumble_LaunchAttack")
+    end
+end
+
+function Grumble_LaunchAttack()
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    grumble_hero = ExGetMainHeroID()
+    if grumble_id == nil then
+        return
+    end
+    ExSetVariable("GrumbleChoiceState", "Charging")
+    ExAddCommandMobOrientToObject(grumble_id, grumble_hero)
+    ExAddCommandCameraToObject(grumble_id, 0)
+    grumble_attack_id = ExAddCommandMoveAndUseObject(
+        grumble_id, grumble_hero
+    )
+    ExSetVariable("GrumbleAttackCommand", grumble_attack_id)
+end
+
+function Grumble_IsBattle(attacker_id, target_id)
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    if grumble_id == nil then
+        return 0
+    end
+    if attacker_id == grumble_id or target_id == grumble_id then
+        return 1
+    end
+    return 0
+end
+
+function Grumble_OnBattleFinishing(attacker_id, target_id, winner_id)
+    grumble_id = ExGetVariable("GrumbleRuntimeId")
+    grumble_hero = ExGetMainHeroID()
+    if grumble_id == nil then
+        return 1
+    end
+    if ExGetVariable("GrumbleChoiceState") ~= "Charging" then
+        return 1
+    end
+
+    ExMessageToScreen(
+        "GRUMBLE BATTLE: W=" .. tostring(winner_id)
+    )
+    if winner_id == grumble_hero then
+        ExSetVariable("GrumbleChoiceState", "Completed")
+        ExMessageToScreen("GRUMBLE: Hero won the battle")
+        return 1
+    end
+
+    -- Same confirmed battle-refusal reset pattern as Lesson 19.
+    ExSetVariable("GrumbleChoiceState", "Cooling")
+    grumble_home_x = ExGetVariable("GrumbleHomeX")
+    grumble_home_y = ExGetVariable("GrumbleHomeY")
+    grumble_start_x = ExGetVariable("GrumbleHeroStartX")
+    grumble_start_y = ExGetVariable("GrumbleHeroStartY")
+
+    if grumble_home_x ~= nil and grumble_home_y ~= nil then
+        ExJumpToPos(grumble_id, grumble_home_x, grumble_home_y)
+        ExMessageToScreen("GRUMBLE RESET: Returned home")
+    end
+    if grumble_start_x ~= nil and grumble_start_y ~= nil then
+        ExJumpToPos(grumble_hero, grumble_start_x, grumble_start_y)
+    end
+    ExAddCommandCameraToObject(grumble_hero, 0)
+    return 0
+end
+
+function Grumble_OnPreUse(object_id, hero_id)
+    if ExGetVariable("GrumbleChoiceState") ~= "Peaceful" then
+        return nil
+    end
+    if object_id == ExGetVariable("GrumbleRuntimeId") then
+        ExMessageToScreen("GRUMBLE TEST: Peaceful PreUse intercepted")
+        ExAddCommandText(
+            object_id, "Hmph. A deal is a deal. Pass in peace.", 1
+        )
+        return 0
+    end
+    return nil
+end
+
+-- Lesson 24: self-register at script initialization.
+EncounterRegistry_Register("Grumble", "GrumbleRuntimeId", "GrumbleChoiceState",
+    Grumble_OnStep, Grumble_OnCloseMessageBox,
+    Grumble_OnBattleFinishing, Grumble_OnPreUse)
+-- END
+
+-- BEGIN src/shared/save_load_diagnostics.lua
+-- LESSON 23: passive save/load diagnostics.
+-- Temporary Lua globals are not placed into ExSetVariable.
+-- This detects initial script execution and observed state transitions.
+Lesson23_LastBee = nil
+Lesson23_LastGrumble = nil
+Lesson23_Initialized = nil
+
+function Lesson23_DiagnosticStep()
+    lesson23_bee = ExGetVariable("BeeChoiceState")
+    lesson23_grumble = ExGetVariable("GrumbleChoiceState")
+
+    if Lesson23_Initialized == nil then
+        Lesson23_Initialized = 1
+        ExMessageToScreen(
+            "L23 START Bee=" .. tostring(lesson23_bee)
+            .. " Grumble=" .. tostring(lesson23_grumble)
+            .. " Gift=" .. tostring(ExGetVariable("BeeGiftReceived"))
+        )
+    end
+
+    if lesson23_bee ~= Lesson23_LastBee then
+        Lesson23_LastBee = lesson23_bee
+        ExMessageToScreen("L23 STATE Bee=" .. tostring(lesson23_bee))
+    end
+
+    if lesson23_grumble ~= Lesson23_LastGrumble then
+        Lesson23_LastGrumble = lesson23_grumble
+        ExMessageToScreen("L23 STATE Grumble=" .. tostring(lesson23_grumble))
+    end
+end
+-- END
+
+-- BEGIN src/shared/hook_router.lua
+-- LESSON 24: unchanged engine API; generic registered encounter routing.
+-- Five engine hooks total. No Bee or Grumble references in this file.
+
+function Hook_OnStep()
+    Lesson23_DiagnosticStep()
+    EncounterRegistry_OnStep()
+end
+
+function Hook_OnCloseMessageBox(callback)
+    EncounterRegistry_OnCloseMessageBox(callback)
+end
+
+function Hook_OnBattleFinishing(attacker_id, target_id, winner_id)
+    return EncounterRegistry_OnBattleFinishing(
+        attacker_id, target_id, winner_id
+    )
+end
+
+function Hook_OnPreUse(object_id, hero_id)
+    return EncounterRegistry_OnPreUse(object_id, hero_id)
+end
+
+function Hook_OnIntercept(hero_id, interceptor_id)
+    return EncounterRegistry_OnIntercept(hero_id, interceptor_id)
+end
+-- END
