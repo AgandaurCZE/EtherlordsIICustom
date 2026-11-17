@@ -176,7 +176,7 @@ function Bramble_OnPreUse(object_id, hero_id)
     end
     if object_id == ExGetVariable("BrambleRuntimeId") then
         if ExGetVariable("SporeQuestSkipBrambleGreeting") == 1 then
-            ExSetVariable("HoneyQuestSkipBrambleGreeting", 0)
+            ExSetVariable("SporeQuestSkipBrambleGreeting", 0)
             return 0
         end
         ExMessageToScreen("BRAMBLE TEST: Peaceful PreUse intercepted")
