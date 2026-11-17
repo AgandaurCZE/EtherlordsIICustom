@@ -1,6 +1,6 @@
 # Lesson 28 — Native Events List / Notebook Experiment
 
-**Partially game-tested (2026-11-17):** User confirmed that custom quest popup text appears in the native Events List with hero portrait/day, and that normal dialogue and battles are also recorded. Further save/load verification is still needed. A follow-up experimental update adds Moss's missing fourth milestone and suppresses journal entries for repeatable greetings using `ExAddCommandText(..., 0)`. Lesson 27 is the proven fallback. This builds on Lesson 27 without modifying its folder or map.
+**Partially game-tested (2026-11-17):** User confirmed that custom quest popup text appears in the native Events List with hero portrait/day, and that normal dialogue and battles are also recorded. User also confirmed that entries persist unchanged across save/load. A follow-up experimental update adds Moss's missing fourth milestone and suppresses journal entries for repeatable greetings using `ExAddCommandText(..., 0)`. Lesson 27 is the proven fallback. This builds on Lesson 27 without modifying its folder or map.
 
 ## Goal
 Find out whether the game's **Events List** is backed by the scripting API's documented **notebook**, and if event entries survive saving/loading.
@@ -50,3 +50,9 @@ In-game screenshots confirm the game's Events List records all dialogue scripted
 **New experimental adjustment:** repeatable peaceful greetings for Grumble and Moss, and repeatable Bee reminder/completion greetings, now use `ExAddCommandText(..., 0)` to request no journal record. Initial story dialogue remains logged. The official `Script functions.pdf` identifies that argument as `bNote`; this behavior should be tested directly. A new save-safe `HoneyJournalRecovered` guard records Moss's honey recovery via a fourth standard popup.
 
 Please test that repeated peaceful interactions remain visible in gameplay **but stop adding Events List entries**, while journal milestones still appear and persist across saving/loading. Previous lesson 27 remains unchanged and verified.
+
+## Quest-focused Events List (2026-11-17 revision)
+
+Player confirmed the new Moss recovery popup works, repeated peaceful greetings no longer create entries, and native journal entries persist across save/load. We now keep only **quest-giving and quest-completion dialogue** recorded with `ExAddCommandText(..., 1)`; routine encounter introductions, peaceful/hostile responses, and intermediate spoken clue/recovery lines use `bNote=0`, remaining visible in gameplay. Four dedicated milestone messages continue writing quest progress to the Events List via `ExMessageBoxStandard` (accepted, clue found, honey recovered, completed).
+
+This is an **untested refinement**: after updating the script, verify that the queen's quest acceptance and completion speech are logged, Grumble/Moss spoken dialogue no longer fills the Events List, and all four milestone entries and save/load remain intact. Engine-managed battle log entries are unaffected and cannot be silenced by `bNote`.
