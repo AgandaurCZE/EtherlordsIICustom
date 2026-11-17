@@ -462,7 +462,7 @@ function Grumble_OnPreUse(object_id, hero_id)
         end
         ExMessageToScreen("GRUMBLE TEST: Peaceful PreUse intercepted")
         ExAddCommandText(
-            object_id, "Hmph. A deal is a deal. Pass in peace.", 1
+            object_id, "Hmph. A deal is a deal. Pass in peace.", 0
         )
         return 0
     end
@@ -654,7 +654,7 @@ function Moss_OnPreUse(object_id, hero_id)
         end
         ExMessageToScreen("MOSS TEST: Peaceful PreUse intercepted")
         ExAddCommandText(
-            object_id, "Welcome back, careful traveler. My mushrooms are safe.", 1
+            object_id, "Welcome back, careful traveler. My mushrooms are safe.", 0
         )
         return 0
     end
@@ -693,12 +693,12 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
     end
     if honey_stage == 1 then
         ExAddCommandText(object_id,
-            "BZZ! Grumble knows something. Please question him!", 1)
+            "BZZ! Grumble knows something. Please question him!", 0)
         return 0
     end
     if honey_stage == 2 then
         ExAddCommandText(object_id,
-            "BZZ! Find Moss! My royal honey is still missing!", 1)
+            "BZZ! Find Moss! My royal honey is still missing!", 0)
         return 0
     end
     if honey_stage == 3 then
@@ -716,7 +716,7 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
     end
     if honey_stage == 4 then
         ExAddCommandText(object_id,
-            "BZZ! My royal honey is safe, thanks to you!", 1)
+            "BZZ! My royal honey is safe, thanks to you!", 0)
         return 0
     end
     return nil
@@ -800,6 +800,7 @@ function HoneyQuest_OnStep()
                 "I recovered the Queen's honey among Moss's belongings.", 1)
         end
         ExMessageToScreen("QUEST: Honey recovered - Return to Bee")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_StageRecovered")
         return
     end
 end
@@ -834,6 +835,19 @@ function HoneyJournal_Stage2()
         "A Suspicious Trade: Find Moss. "
         .. "Grumble traded the Queen's honey to Moss for rare mushrooms. "
         .. "Find Moss and recover the royal honey.",
+        ExGetMainHeroID()
+    )
+end
+
+function HoneyJournal_StageRecovered()
+    if ExGetVariable("HoneyJournalRecovered") == 1 then
+        return
+    end
+    ExSetVariable("HoneyJournalRecovered", 1)
+    ExMessageBoxStandard(
+        "Royal Honey Recovered: Return to the Queen. "
+        .. "Moss has surrendered the missing honey. "
+        .. "Bring it back to bluhblah for your reward.",
         ExGetMainHeroID()
     )
 end
