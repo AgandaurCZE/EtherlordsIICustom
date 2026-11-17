@@ -156,9 +156,9 @@ function Bee_OnStep()
 
     ExSoftAbortCmd(hero_id)
     ExAbortAllCommand()
-    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 1)
-    ExAddCommandText(hero_id, "I was just passing through!", 1)
-    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 1)
+    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 0)
+    ExAddCommandText(hero_id, "I was just passing through!", 0)
+    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 0)
     ExAddCommandExecuteScriptFunction("Bee_AskQuestion")
 end
 
@@ -179,15 +179,15 @@ function Bee_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("BeeChoiceState", "Peaceful")
         -- Lesson 22: no faction-wide change; keep P1/P2 hostile.
-        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 0)
         ExAddCommandExecuteScriptFunction("Bee_GiveGift")
     else
         ExSetVariable("BeeChoiceState", "Hostile")
         -- Lesson 22: P1/P2 remains hostile for native battle initiation.
-        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 0)
         ExAddCommandExecuteScriptFunction("Bee_LaunchAttack")
     end
 end
@@ -347,9 +347,9 @@ function Grumble_OnStep()
 
     ExSoftAbortCmd(grumble_hero)
     ExAbortAllCommand()
-    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 1)
-    ExAddCommandText(grumble_hero, "I am just exploring.", 1)
-    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 1)
+    ExAddCommandText(grumble_id, "GRRR! Who stomps across my territory?", 0)
+    ExAddCommandText(grumble_hero, "I am just exploring.", 0)
+    ExAddCommandText(grumble_id, "Then choose! A friendly truce, or a proper duel?", 0)
     ExAddCommandExecuteScriptFunction("Grumble_AskQuestion")
 end
 
@@ -369,20 +369,18 @@ function Grumble_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("GrumbleChoiceState", "Peaceful")
         -- Lesson 22: no faction-wide change; Grumble is on P2.
-        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 1)
+        ExAddCommandText(ExGetMainHeroID(), "How about we call it a truce?", 0)
         ExAddCommandText(
             ExGetVariable("GrumbleRuntimeId"),
-            "Hmph. Fine. You may pass without a fight.",
-            1
+            "Hmph. Fine. You may pass without a fight.", 0
         )
     else
         ExSetVariable("GrumbleChoiceState", "Hostile")
         -- Lesson 22: Grumble shares hostile P2 faction with Bee.
-        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "I challenge you, Grumble!", 0)
         ExAddCommandText(
             ExGetVariable("GrumbleRuntimeId"),
-            "HA! Finally, a worthy opponent! Prepare yourself!",
-            1
+            "HA! Finally, a worthy opponent! Prepare yourself!", 0
         )
         ExAddCommandExecuteScriptFunction("Grumble_LaunchAttack")
     end
@@ -539,9 +537,9 @@ function Moss_OnStep()
 
     ExSoftAbortCmd(moss_hero)
     ExAbortAllCommand()
-    ExAddCommandText(moss_id, "Oh! Someone's walking through my mushroom patch!", 1)
-    ExAddCommandText(moss_hero, "I didn't mean to disturb your garden.", 1)
-    ExAddCommandText(moss_id, "Will you protect these mushrooms, or trample them?", 1)
+    ExAddCommandText(moss_id, "Oh! Someone's walking through my mushroom patch!", 0)
+    ExAddCommandText(moss_hero, "I didn't mean to disturb your garden.", 0)
+    ExAddCommandText(moss_id, "Will you protect these mushrooms, or trample them?", 0)
     ExAddCommandExecuteScriptFunction("Moss_AskQuestion")
 end
 
@@ -561,20 +559,18 @@ function Moss_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("MossChoiceState", "Peaceful")
         -- Shared P2 faction stays hostile; peaceful state is object-specific.
-        ExAddCommandText(ExGetMainHeroID(), "I'll leave every mushroom untouched.", 1)
+        ExAddCommandText(ExGetMainHeroID(), "I'll leave every mushroom untouched.", 0)
         ExAddCommandText(
             ExGetVariable("MossRuntimeId"),
-            "Oh, wonderful! The mushrooms thank you!",
-            1
+            "Oh, wonderful! The mushrooms thank you!", 0
         )
     else
         ExSetVariable("MossChoiceState", "Hostile")
         -- Shared P2 faction stays hostile; do not change faction hostility.
-        ExAddCommandText(ExGetMainHeroID(), "These mushrooms look like excellent stepping stones!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "These mushrooms look like excellent stepping stones!", 0)
         ExAddCommandText(
             ExGetVariable("MossRuntimeId"),
-            "Not one step further! Defend the mushroom kingdom!",
-            1
+            "Not one step further! Defend the mushroom kingdom!", 0
         )
         ExAddCommandExecuteScriptFunction("Moss_LaunchAttack")
     end
@@ -776,10 +772,10 @@ function HoneyQuest_OnStep()
             -- Consume that extra greeting once, not permanently.
             ExSetVariable("HoneyQuestSkipGrumbleGreeting", 1)
             ExAddCommandText(honey_grumble_id,
-                "I traded the Queen's honey to Moss for rare mushrooms!", 1)
+                "I traded the Queen's honey to Moss for rare mushrooms!", 0)
         else
             ExAddCommandText(ExGetMainHeroID(),
-                "Grumble's belongings reveal a honey trade with Moss.", 1)
+                "Grumble's belongings reveal a honey trade with Moss.", 0)
         end
         ExMessageToScreen("QUEST: Clue found - Find Moss")
         ExAddCommandExecuteScriptFunction("HoneyJournal_Stage2")
@@ -794,10 +790,10 @@ function HoneyQuest_OnStep()
         if honey_moss_state == "Peaceful" and honey_moss_id ~= nil then
             ExSetVariable("HoneyQuestSkipMossGreeting", 1)
             ExAddCommandText(honey_moss_id,
-                "The honey? Of course! Please return it to the Queen.", 1)
+                "The honey? Of course! Please return it to the Queen.", 0)
         else
             ExAddCommandText(ExGetMainHeroID(),
-                "I recovered the Queen's honey among Moss's belongings.", 1)
+                "I recovered the Queen's honey among Moss's belongings.", 0)
         end
         ExMessageToScreen("QUEST: Honey recovered - Return to Bee")
         ExAddCommandExecuteScriptFunction("HoneyJournal_StageRecovered")
