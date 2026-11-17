@@ -170,6 +170,10 @@ function Moss_OnPreUse(object_id, hero_id)
         return nil
     end
     if object_id == ExGetVariable("MossRuntimeId") then
+        if ExGetVariable("HoneyQuestSkipMossGreeting") == 1 then
+            ExSetVariable("HoneyQuestSkipMossGreeting", 0)
+            return 0
+        end
         ExMessageToScreen("MOSS TEST: Peaceful PreUse intercepted")
         ExAddCommandText(
             object_id, "Welcome back, careful traveler. My mushrooms are safe.", 1
