@@ -16,8 +16,9 @@ A source-controlled workshop for creating a fan Etherlords III campaign using **
 | 24 | [lesson-24-registry](tests/lesson-24-registry/) | Save/load-safe callback-name registry and generic router | Game-tested **with hotfix merged** |
 | 25 | [lesson-25-template](tests/lesson-25-template/) | Third encounter, Moss (Hero model), plus reusable template | **Game-tested success**: Moss as a Hero, cross-encounter choices, refusal/rearm, victory and save/load confirmed |
 | 27 | [lesson-27-honey-quest](tests/lesson-27-honey-quest/) | First interconnected quest with Bee, Grumble, Moss and independent saved progression | **Game-tested success** — complete quest, pre-resolved NPC gating, dialogue overlap correction, and persistence confirmed |
+| 28 | [lesson-28-event-journal](tests/lesson-28-event-journal/) | Test documented notebook messages against game's Events List | **Experimental — awaiting game test** |
 
-For the game-tested multi-NPC quest use [Lesson 27 generated TestMap.scp](tests/lesson-27-honey-quest/build/TestMap.scp). For proven three-encounter testing use [Lesson 25 generated TestMap.scp](tests/lesson-25-template/build/TestMap.scp). For the last verified two-encounter fallback use [Lesson 24 generated TestMap.scp](tests/lesson-24-registry/build/TestMap.scp).
+For experimental Events List testing use [Lesson 28 generated TestMap.scp](tests/lesson-28-event-journal/build/TestMap.scp). For the game-tested multi-NPC quest use [Lesson 27 generated TestMap.scp](tests/lesson-27-honey-quest/build/TestMap.scp). For proven three-encounter testing use [Lesson 25 generated TestMap.scp](tests/lesson-25-template/build/TestMap.scp). For the last verified two-encounter fallback use [Lesson 24 generated TestMap.scp](tests/lesson-24-registry/build/TestMap.scp).
 
 The Lesson 24 fix is included in the Lesson 24 folder on `main`: callback functions are stored in the encounter registry **as strings** and looked up using Lua 4 `getglobal(name)`, rather than saving Lua function values (which caused a crash after loading).
 
