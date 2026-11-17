@@ -15,8 +15,9 @@ A source-controlled workshop for creating a fan Etherlords III campaign using **
 | 23 | [lesson-23-save-load](tests/lesson-23-save-load/) | Choices and rewards persist across save/load | Game-tested |
 | 24 | [lesson-24-registry](tests/lesson-24-registry/) | Save/load-safe callback-name registry and generic router | Game-tested **with hotfix merged** |
 | 25 | [lesson-25-template](tests/lesson-25-template/) | Third encounter, Moss (Hero model), plus reusable template | **Game-tested success**: Moss as a Hero, cross-encounter choices, refusal/rearm, victory and save/load confirmed |
+| 27 | [lesson-27-honey-quest](tests/lesson-27-honey-quest/) | First interconnected quest with Bee, Grumble, Moss and independent saved progression | **Experimental — not yet game-tested** |
 
-For current three-encounter testing use [Lesson 25 generated TestMap.scp](tests/lesson-25-template/build/TestMap.scp). For the last verified two-encounter fallback use [Lesson 24 generated TestMap.scp](tests/lesson-24-registry/build/TestMap.scp).
+For the experimental multi-NPC quest use [Lesson 27 generated TestMap.scp](tests/lesson-27-honey-quest/build/TestMap.scp). For proven three-encounter testing use [Lesson 25 generated TestMap.scp](tests/lesson-25-template/build/TestMap.scp). For the last verified two-encounter fallback use [Lesson 24 generated TestMap.scp](tests/lesson-24-registry/build/TestMap.scp).
 
 The Lesson 24 fix is included in the Lesson 24 folder on `main`: callback functions are stored in the encounter registry **as strings** and looked up using Lua 4 `getglobal(name)`, rather than saving Lua function values (which caused a crash after loading).
 
