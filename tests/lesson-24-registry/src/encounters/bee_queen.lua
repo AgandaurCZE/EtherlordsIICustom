@@ -179,4 +179,4 @@ end
 
 -- Lesson 24: self-register at script initialization.
 EncounterRegistry_Register("Bee", "BeeRuntimeId", "BeeChoiceState",
-    Bee_OnStep, Bee_OnCloseMessageBox, Bee_OnBattleFinishing, Bee_OnPreUse)
+    "Bee_OnStep", "Bee_OnCloseMessageBox", "Bee_OnBattleFinishing", "Bee_OnPreUse")
