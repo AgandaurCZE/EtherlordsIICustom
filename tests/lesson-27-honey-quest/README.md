@@ -1,6 +1,6 @@
 # Lesson 27 — The Queen's Missing Honey
 
-**Experimental: not yet tested in Etherlords II.** Lesson 25 remains the verified fallback.
+**Partially game-tested; proximity fix awaiting verification.** Player confirmed peaceful and combat quest completion, mixed resolutions, one-time reward, and saving/loading. A bug in pre-resolved NPCs triggered remote dialogue; the corrected build now requires visiting each NPC's location. Lesson 25 remains the verified fallback.
 
 This lesson adds an interconnected quest across **bluhblah, Grumble, and Moss**, using the same **20×20 editor map / 19×19 accessible tiles** and the same **P2** faction. No Map Editor changes.
 
@@ -23,7 +23,16 @@ This lesson adds an interconnected quest across **bluhblah, Grumble, and Moss**,
 
 Quest stages: `nil` not started, `1` investigate Grumble, `2` seek Moss, `3` return to Bee, `4` complete. It uses a logical honey quest flag; **there is no physical honey inventory item** in this test.
 
-Players may resolve Grumble or Moss before formally starting the quest: a valid earlier peaceful/completed state can satisfy the respective quest stage when reached.
+Players may resolve Grumble or Moss before formally starting the quest: a valid earlier peaceful/completed state can satisfy the corresponding stage **only after the hero revisits the relevant NPC's coordinates**. Clue at Grumble (15,10), honey at Moss (10,16); being near Bee is not sufficient.
+
+## Important regression: pre-resolved characters
+
+1. In a fresh scenario, resolve Grumble and Moss before accepting the Queen's quest (peace or victory, mixed choices are fine).
+2. Return to Bee, apologize and receive her original gift, then click again to start the quest. **No Grumble clue and no Moss dialogue must trigger while standing by Bee.**
+3. Walk to Grumble's position at (15,10). His previously resolved encounter can now reveal the clue without requiring a second truce/fight.
+4. Walk to Moss's position at (10,16). Only there should the honey be recovered.
+5. Return to Bee to complete the quest once. Save/load between stages and verify proximity gating still works after reloading.
+6. Normal quest order should still automatically show clue/recovery narration shortly after the original peaceful dialogue or battle ends, without needing another click.
 
 ## Save/load tests
 
