@@ -18,6 +18,7 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
         ExAddCommandText(hero_id,
             "I will investigate the missing honey, Your Buzziness.", 1)
         ExMessageToScreen("QUEST: Missing Honey - Question Grumble")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage1")
         return 0
     end
     if honey_stage == 1 then
@@ -39,6 +40,7 @@ function HoneyQuest_BeeInteraction(object_id, hero_id)
         ExAddCommandText(object_id,
             "BZZZZ! The hive is saved! Accept my royal reward!", 1)
         ExAddCommandExecuteScriptFunction("HoneyQuest_Reward")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage3")
         ExMessageToScreen("QUEST COMPLETE: The Queen's Missing Honey")
         return 0
     end
@@ -110,6 +112,7 @@ function HoneyQuest_OnStep()
                 "Grumble's belongings reveal a honey trade with Moss.", 1)
         end
         ExMessageToScreen("QUEST: Clue found - Find Moss")
+        ExAddCommandExecuteScriptFunction("HoneyJournal_Stage2")
         return
     end
 
