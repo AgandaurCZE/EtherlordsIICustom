@@ -50,9 +50,9 @@ function Bee_OnStep()
 
     ExSoftAbortCmd(hero_id)
     ExAbortAllCommand()
-    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 1)
-    ExAddCommandText(hero_id, "I was just passing through!", 1)
-    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 1)
+    ExAddCommandText(bee_id, "BZZ! You dare enter my sacred kingdom?", 0)
+    ExAddCommandText(hero_id, "I was just passing through!", 0)
+    ExAddCommandText(bee_id, "Then show some respect to your Queen!", 0)
     ExAddCommandExecuteScriptFunction("Bee_AskQuestion")
 end
 
@@ -73,15 +73,15 @@ function Bee_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("BeeChoiceState", "Peaceful")
         -- Lesson 22: no faction-wide change; keep P1/P2 hostile.
-        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "Forgive me, Your Buzziness!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZ! Your apology is accepted!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "Take this magical gift from my hive!", 0)
         ExAddCommandExecuteScriptFunction("Bee_GiveGift")
     else
         ExSetVariable("BeeChoiceState", "Hostile")
         -- Lesson 22: P1/P2 remains hostile for native battle initiation.
-        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 1)
-        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "Your honey tastes like swamp water!", 0)
+        ExAddCommandText(ExGetVariable("BeeRuntimeId"), "BZZZZ! NOBODY INSULTS MY HONEY!", 0)
         ExAddCommandExecuteScriptFunction("Bee_LaunchAttack")
     end
 end
