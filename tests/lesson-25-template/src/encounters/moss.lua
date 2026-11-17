@@ -1,5 +1,5 @@
 -- LESSON 25: Moss sample encounter built from the tested Grumble pattern
--- Map position (22,15). Moss belongs to P2, alongside Bee and Grumble.
+-- Map position (10,16). Moss belongs to P2, alongside Bee and Grumble.
 -- All runtime global scratch variables and stored state are Moss-prefixed.
 
 function Moss_OnStep()
@@ -7,7 +7,7 @@ function Moss_OnStep()
     moss_hero = ExGetMainHeroID()
 
     if moss_state == "Cooling" then
-        if CalcDistanceObjectPoint(moss_hero, 22, 15) >= 3 then
+        if CalcDistanceObjectPoint(moss_hero, 10, 16) >= 3 then
             ExSetVariable("MossChoiceState", "Ready")
             ExMessageToScreen("MOSS RESET: Encounter rearmed")
         end
@@ -16,7 +16,7 @@ function Moss_OnStep()
     if moss_state ~= nil and moss_state ~= "Ready" then
         return
     end
-    if CalcDistanceObjectPoint(moss_hero, 22, 15) >= 3 then
+    if CalcDistanceObjectPoint(moss_hero, 10, 16) >= 3 then
         return
     end
 
@@ -37,7 +37,7 @@ function Moss_OnStep()
     for moss_index = 0, ExGetMobCount() - 1 do
         moss_candidate = ExGetMobByIndex(moss_index)
         moss_current_distance = CalcDistanceObjectPoint(
-            moss_candidate, 22, 15
+            moss_candidate, 10, 16
         )
         if moss_current_distance < moss_distance then
             moss_id = moss_candidate
@@ -46,7 +46,7 @@ function Moss_OnStep()
     end
     if moss_id == nil or moss_distance > 2 then
         ExSetVariable("MossChoiceState", "NotFound")
-        ExMessageToScreen("MOSS ERROR: Cannot find monster near (22,15)")
+        ExMessageToScreen("MOSS ERROR: Cannot find monster near (10,16)")
         return
     end
 
