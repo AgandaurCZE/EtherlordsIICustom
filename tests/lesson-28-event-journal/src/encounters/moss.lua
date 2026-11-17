@@ -61,9 +61,9 @@ function Moss_OnStep()
 
     ExSoftAbortCmd(moss_hero)
     ExAbortAllCommand()
-    ExAddCommandText(moss_id, "Oh! Someone's walking through my mushroom patch!", 1)
-    ExAddCommandText(moss_hero, "I didn't mean to disturb your garden.", 1)
-    ExAddCommandText(moss_id, "Will you protect these mushrooms, or trample them?", 1)
+    ExAddCommandText(moss_id, "Oh! Someone's walking through my mushroom patch!", 0)
+    ExAddCommandText(moss_hero, "I didn't mean to disturb your garden.", 0)
+    ExAddCommandText(moss_id, "Will you protect these mushrooms, or trample them?", 0)
     ExAddCommandExecuteScriptFunction("Moss_AskQuestion")
 end
 
@@ -83,20 +83,18 @@ function Moss_OnCloseMessageBox(callback)
     if callback == "OK" then
         ExSetVariable("MossChoiceState", "Peaceful")
         -- Shared P2 faction stays hostile; peaceful state is object-specific.
-        ExAddCommandText(ExGetMainHeroID(), "I'll leave every mushroom untouched.", 1)
+        ExAddCommandText(ExGetMainHeroID(), "I'll leave every mushroom untouched.", 0)
         ExAddCommandText(
             ExGetVariable("MossRuntimeId"),
-            "Oh, wonderful! The mushrooms thank you!",
-            1
+            "Oh, wonderful! The mushrooms thank you!", 0
         )
     else
         ExSetVariable("MossChoiceState", "Hostile")
         -- Shared P2 faction stays hostile; do not change faction hostility.
-        ExAddCommandText(ExGetMainHeroID(), "These mushrooms look like excellent stepping stones!", 1)
+        ExAddCommandText(ExGetMainHeroID(), "These mushrooms look like excellent stepping stones!", 0)
         ExAddCommandText(
             ExGetVariable("MossRuntimeId"),
-            "Not one step further! Defend the mushroom kingdom!",
-            1
+            "Not one step further! Defend the mushroom kingdom!", 0
         )
         ExAddCommandExecuteScriptFunction("Moss_LaunchAttack")
     end
