@@ -5,6 +5,7 @@ function Hook_OnStep()
     Lesson23_DiagnosticStep()
     EncounterRegistry_OnStep()
     HoneyQuest_OnStep()
+    SporeQuest_OnStep()
 end
 
 function Hook_OnCloseMessageBox(callback)
