@@ -176,5 +176,5 @@ end
 
 -- Lesson 24: self-register at script initialization.
 EncounterRegistry_Register("Grumble", "GrumbleRuntimeId", "GrumbleChoiceState",
-    Grumble_OnStep, Grumble_OnCloseMessageBox,
-    Grumble_OnBattleFinishing, Grumble_OnPreUse)
+    "Grumble_OnStep", "Grumble_OnCloseMessageBox",
+    "Grumble_OnBattleFinishing", "Grumble_OnPreUse")
