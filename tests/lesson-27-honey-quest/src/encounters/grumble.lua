@@ -165,6 +165,10 @@ function Grumble_OnPreUse(object_id, hero_id)
         return nil
     end
     if object_id == ExGetVariable("GrumbleRuntimeId") then
+        if ExGetVariable("HoneyQuestSkipGrumbleGreeting") == 1 then
+            ExSetVariable("HoneyQuestSkipGrumbleGreeting", 0)
+            return 0
+        end
         ExMessageToScreen("GRUMBLE TEST: Peaceful PreUse intercepted")
         ExAddCommandText(
             object_id, "Hmph. A deal is a deal. Pass in peace.", 1
