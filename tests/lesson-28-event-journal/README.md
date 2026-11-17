@@ -1,6 +1,6 @@
 # Lesson 28 — Native Events List / Notebook Experiment
 
-**Experimental — awaiting game test.** Lesson 27 is the proven fallback. This builds on Lesson 27 without modifying its folder or map.
+**Partially game-tested (2026-11-17):** User confirmed that custom quest popup text appears in the native Events List with hero portrait/day, and that normal dialogue and battles are also recorded. Further save/load verification is still needed. A follow-up experimental update adds Moss's missing fourth milestone and suppresses journal entries for repeatable greetings using `ExAddCommandText(..., 0)`. Lesson 27 is the proven fallback. This builds on Lesson 27 without modifying its folder or map.
 
 ## Goal
 Find out whether the game's **Events List** is backed by the scripting API's documented **notebook**, and if event entries survive saving/loading.
@@ -26,7 +26,7 @@ Copy `build/TestMap.scp` to the game's `Maps/Custom/TestMap.scp` next to `TestMa
 3. Resolve Grumble via peace or combat. After the original clue dialogue, a second OK popup should say **A Suspicious Trade: Find Moss**.
 4. Check **Events List** again. Are the first and second entries visible together? Is the mission filter affecting visibility?
 5. Resolve Moss via peace or combat, return to Bee, turn in quest, and claim the bonus spell. After the completion sequence, a third OK popup should say **The Royal Honey Returned: Quest complete**.
-6. Check the list: all three entries, their detail text, day, and order.
+6. After resolving Moss, a fourth milestone popup should appear: **Royal Honey Recovered: Return to the Queen**. Check the log for all four entries: initial quest, Grumble clue, Moss recovery, and completion.
 7. Save and load after each stage where practical, checking whether notebook entries persist, duplicate, or disappear. The one-time quest reward and encounter states must remain intact.
 
 ## Implementation
@@ -42,3 +42,11 @@ Copy `build/TestMap.scp` to the game's `Maps/Custom/TestMap.scp` next to `TestMa
 - Any Lua script error or new issue with the dialogue sequence. If one appears, restore Lesson 27 and report the exact error.
 
 This experiment does not implement an editable active-objectives list; it first establishes whether the native event log can be written at all.
+
+## Journal discovery and follow-up test
+
+In-game screenshots confirm the game's Events List records all dialogue scripted with `ExAddCommandText(..., 1)`, plus combat summaries, and that `ExMessageBoxStandard(message, ExGetMainHeroID())` adds custom journal text with hero portrait and day. These are native event-log entries, not a separate active quest-objectives UI.
+
+**New experimental adjustment:** repeatable peaceful greetings for Grumble and Moss, and repeatable Bee reminder/completion greetings, now use `ExAddCommandText(..., 0)` to request no journal record. Initial story dialogue remains logged. The official `Script functions.pdf` identifies that argument as `bNote`; this behavior should be tested directly. A new save-safe `HoneyJournalRecovered` guard records Moss's honey recovery via a fourth standard popup.
+
+Please test that repeated peaceful interactions remain visible in gameplay **but stop adding Events List entries**, while journal milestones still appear and persist across saving/loading. Previous lesson 27 remains unchanged and verified.
