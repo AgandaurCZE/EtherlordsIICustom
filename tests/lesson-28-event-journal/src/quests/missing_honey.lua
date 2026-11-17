@@ -106,10 +106,10 @@ function HoneyQuest_OnStep()
             -- Consume that extra greeting once, not permanently.
             ExSetVariable("HoneyQuestSkipGrumbleGreeting", 1)
             ExAddCommandText(honey_grumble_id,
-                "I traded the Queen's honey to Moss for rare mushrooms!", 1)
+                "I traded the Queen's honey to Moss for rare mushrooms!", 0)
         else
             ExAddCommandText(ExGetMainHeroID(),
-                "Grumble's belongings reveal a honey trade with Moss.", 1)
+                "Grumble's belongings reveal a honey trade with Moss.", 0)
         end
         ExMessageToScreen("QUEST: Clue found - Find Moss")
         ExAddCommandExecuteScriptFunction("HoneyJournal_Stage2")
@@ -124,10 +124,10 @@ function HoneyQuest_OnStep()
         if honey_moss_state == "Peaceful" and honey_moss_id ~= nil then
             ExSetVariable("HoneyQuestSkipMossGreeting", 1)
             ExAddCommandText(honey_moss_id,
-                "The honey? Of course! Please return it to the Queen.", 1)
+                "The honey? Of course! Please return it to the Queen.", 0)
         else
             ExAddCommandText(ExGetMainHeroID(),
-                "I recovered the Queen's honey among Moss's belongings.", 1)
+                "I recovered the Queen's honey among Moss's belongings.", 0)
         end
         ExMessageToScreen("QUEST: Honey recovered - Return to Bee")
         ExAddCommandExecuteScriptFunction("HoneyJournal_StageRecovered")
