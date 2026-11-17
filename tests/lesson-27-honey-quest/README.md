@@ -1,6 +1,6 @@
 # Lesson 27 — The Queen's Missing Honey
 
-**Partially game-tested; dialogue overlap fix awaiting verification.** Player confirmed peaceful and combat quest completion, mixed resolutions, one-time reward, and saving/loading. A bug in pre-resolved NPCs triggered remote dialogue; the corrected build now requires visiting each NPC's location. Lesson 25 remains the verified fallback.
+**Game-tested success (2026-11-17).** User confirmed that the proximity and duplicate peaceful-greeting fixes now work flawlessly. Previously verified: peaceful/hostile/mixed quest paths, pre-resolved NPC routing, one-time quest reward, and save/load persistence. Player confirmed peaceful and combat quest completion, mixed resolutions, one-time reward, and saving/loading. A bug in pre-resolved NPCs triggered remote dialogue; the corrected build now requires visiting each NPC's location. Lesson 25 remains the verified fallback.
 
 This lesson adds an interconnected quest across **bluhblah, Grumble, and Moss**, using the same **20×20 editor map / 19×19 accessible tiles** and the same **P2** faction. No Map Editor changes.
 
@@ -59,6 +59,6 @@ After successfully testing the proximity correction, the player reported that ap
 
 The corrected quest sets a one-use `HoneyQuestSkipGrumbleGreeting` or `HoneyQuestSkipMossGreeting` flag when it queues the NPC's peaceful quest dialogue. That NPC's `OnPreUse` consumes the flag and returns 0 without adding the standard greeting. Subsequent clicks should give the usual greeting. Flags are simple `ExSetVariable` numbers for save/load compatibility.
 
-**Important edge case:** If an NPC's `OnPreUse` is *not* called automatically after the quest narration, the next manual click may be swallowed once. Please specifically test a second deliberate click in that case and report it. If necessary we'll instead route the quest line through the interaction hook itself.
+**Status:** User reports the dialogue fix now works flawlessly in game. The one-use flag behavior remains documented above as an implementation consideration for later encounter designs.
 
 Repeat normal quest, pre-resolved Grumble/Moss, and save/load tests. No map edits.
