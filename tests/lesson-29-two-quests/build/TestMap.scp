@@ -1125,8 +1125,8 @@ function SporeQuest_OnStep()
         spore_bramble_id = ExGetVariable("BrambleRuntimeId")
         if spore_bramble_id ~= nil then
             ExSetVariable("SporeQuestSkipBrambleGreeting", 1)
-            ExAddCommandText(spore_bramble_id,
-                "Take the spores back to Moss. Keep our bargain secret.", 0)
+            -- Bramble already handed over the spores in her peaceful
+            -- encounter dialogue; avoid a second spoken handover line.
         end
         ExAddCommandExecuteScriptFunction("SporeJournal_Recovered")
         ExMessageToScreen("SIDE QUEST: Spores recovered - Return to Moss")
