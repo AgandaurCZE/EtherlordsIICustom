@@ -1,0 +1,22 @@
+-- Chapter 02: campaign progression gate; no manual hero restoration.
+function Hook_OnStep()
+    if ExGetVariable("E3_Chapter02_Checked") == 1 then return end
+    ExSetVariable("E3_Chapter02_Checked",1)
+    if ExGetVariable("E3L41_Chapter01Complete") ~= 1
+       or ExGetVariable("E3L41_TransferMarker") ~= 410011 then
+        ExMessageBoxStandard("Chapter 02 is locked: Chapter 01 has not "
+            .. "been completed in this campaign playthrough.")
+        ExAddCommandLose()
+        return
+    end
+    e3_hero=ExGetMainHeroID()
+    if e3_hero == nil or e3_hero == 0 then
+        ExMessageBoxStandard("Chapter 02 could not identify the player hero.")
+        return
+    end
+    ExMessageBoxStandard("Chapter 02 unlocked. Your hero's progression "
+        .. "has been brought forward by the campaign system.")
+end
+function Hook_OnBattleFinishing(attacker_id,target_id,winner_id)
+    return 1
+end
