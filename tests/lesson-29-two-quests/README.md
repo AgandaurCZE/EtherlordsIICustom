@@ -1,6 +1,6 @@
 # Lesson 29 — Two Independent Quests / Missable Spores
 
-**Experimental — awaiting in-game testing.** Lesson 28 is the verified fallback. This folder is self-contained and lives on `main`.
+**Game-tested core (2026-11-18); small dialogue fix awaiting recheck.** Player confirmed that both quests work independently and save/load retains their states at every tested stage. Bramble's spore-handover line appeared redundant; an extra spoken line was removed in a targeted revision. Lesson 28 remains the previous fully verified fallback. This folder is self-contained and lives on `main`.
 
 ## Map Editor setup
 
@@ -56,3 +56,7 @@ The existing Lesson 28 main quest is preserved: apologize to Bee, click again to
 - Journal writes use `ExMessageBoxStandard` and one-time saved flags. Ordinary dialogue uses `ExAddCommandText(..., 0)` except meaningful quest-giving and completion dialogue.
 - `build.py` assembles the game-ready **single** `build/TestMap.scp`; individual `.lua` files are only developer sources.
 - The entire lesson is **experimental until the player tests it**. Keep a copy of verified Lesson 28.
+
+## In-game test report (2026-11-18)
+
+Player confirms both honey and spores quests work, including save/load at every tested stage. One minor issue: Bramble repeated her final spore-related dialogue. The quest's additional spoken line was removed because her peaceful encounter already agrees to hand over the spores. The spore recovery state, journal update, and rewards are unchanged. **Please recheck the Bramble handover sequence in this revised build before calling the refinement fully verified.**
