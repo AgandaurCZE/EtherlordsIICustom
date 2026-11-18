@@ -1,0 +1,39 @@
+-- Chapter 01: real editor-built terrain in the original Vitals mission 11 resource slot.
+-- Fort (21,14) is the objective. Lua 4, save-safe global callbacks.
+function E3_Chapter01_Start()
+    if ExGetVariable("E3L41_Started") == 1 then return end
+    ExSetVariable("E3L41_Started",1)
+    ExMessageBoxStandard("Chapter 01: Explore the area and enter the fort "
+        .. "at (21,14) to conclude the mission.")
+end
+function E3_Chapter01_Complete()
+    if ExGetVariable("E3L41_WinQueued") == 1 then return end
+    ExSetVariable("E3L41_WinQueued",1)
+    ExSetVariable("E3L41_Chapter01Complete",1,1)
+    ExSetVariable("E3L41_TransferMarker",410011,1)
+    e3_hero=ExGetMainHeroID()
+    ExSetVariable("E3L41_Exp",ExGetExp(e3_hero),1)
+    ExSetVariable("E3L41_Level",ExGetHeroLevel(e3_hero),1)
+    e3_r1,e3_r2,e3_r3=ExGetResources(1)
+    ExSetVariable("E3L41_Resource1",e3_r1,1)
+    ExSetVariable("E3L41_Resource2",e3_r2,1)
+    ExSetVariable("E3L41_Resource3",e3_r3,1)
+    ExAddCommandText(e3_hero,"Chapter 01 completed. Continue to Chapter 02.",0)
+    ExAddCommandWin()
+end
+function Hook_OnStep()
+    if ExGetVariable("E3L41_Started") ~= 1 then
+        E3_Chapter01_Start()
+        return
+    end
+    if ExGetVariable("E3L41_WinQueued") == 1 then return end
+    e3_hero=ExGetMainHeroID()
+    if e3_hero == nil or e3_hero == 0 then return end
+    if ExIsHeroFortified(e3_hero) == 1
+       and CalcDistanceObjectPoint(e3_hero,21,14) < 3 then
+        E3_Chapter01_Complete()
+    end
+end
+function Hook_OnBattleFinishing(attacker_id,target_id,winner_id)
+    return 1
+end
