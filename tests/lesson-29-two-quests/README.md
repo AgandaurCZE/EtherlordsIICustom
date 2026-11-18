@@ -1,6 +1,6 @@
 # Lesson 29 — Two Independent Quests / Missable Spores
 
-**Game-tested core (2026-11-18); small dialogue fix awaiting recheck.** Player confirmed that both quests work independently and save/load retains their states at every tested stage. Bramble's spore-handover line appeared redundant; an extra spoken line was removed in a targeted revision. Lesson 28 remains the previous fully verified fallback. This folder is self-contained and lives on `main`.
+**Game-tested success (2026-11-18).** Player confirmed both quests function independently, save/load retains state at every tested stage, and the revised Bramble spore-handover dialogue plays correctly. Lesson 28 remains an earlier verified fallback. This folder is self-contained and lives on `main`.
 
 ## Map Editor setup
 
@@ -59,4 +59,8 @@ The existing Lesson 28 main quest is preserved: apologize to Bee, click again to
 
 ## In-game test report (2026-11-18)
 
-Player confirms both honey and spores quests work, including save/load at every tested stage. One minor issue: Bramble repeated her final spore-related dialogue. The quest's additional spoken line was removed because her peaceful encounter already agrees to hand over the spores. The spore recovery state, journal update, and rewards are unchanged. **Please recheck the Bramble handover sequence in this revised build before calling the refinement fully verified.**
+Player confirms both honey and spores quests work, including save/load at every tested stage. One minor issue: Bramble repeated her final spore-related dialogue. The quest's additional spoken line was removed because her peaceful encounter already agrees to hand over the spores. The spore recovery state, journal update, and rewards are unchanged. **Final recheck passed:** player confirmed the corrected Bramble dialogue now works as intended.
+
+## Final confirmation — 2026-11-18
+
+The player verified the corrected Bramble dialogue no longer repeats, all dual-quest mechanics work, and save/load at different quest stages remains functional. The player additionally observed that changing the .scp script and loading older saves can work in this configuration. **This is observed compatibility for these edits, not a guarantee for future script or save-data changes.** Lesson 29 is the verified baseline for the upcoming first campaign map.
