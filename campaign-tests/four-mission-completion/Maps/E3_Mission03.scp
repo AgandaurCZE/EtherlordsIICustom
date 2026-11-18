@@ -1,0 +1,40 @@
+-- Etherlords III: Four-mission campaign completion test, Mission 3
+-- Reused Chapter02 terrain. Hero starts (9,3); cross (9,8) to win.
+function E3Four_Start()
+    if ExGetVariable("E3Four_Mission03Started") == 1 then return end
+    ExSetVariable("E3Four_Mission03Started",1)
+    if ExGetVariable("E3Four_Mission02Complete") ~= 1 then
+        ExMessageBoxStandard("Previous mission completion marker missing. This stage is blocked.")
+        ExAddCommandLose()
+        return
+    end
+    ExMessageToScreen("FOUR-MISSION TEST: MISSION 3/4")
+    ExMessageBoxStandard("Mission 3 of 4: Walk south to (9,8) to finish.")
+end
+function E3Four_Complete()
+    if ExGetVariable("E3Four_Mission03WinQueued") == 1 then return end
+    ExSetVariable("E3Four_Mission03WinQueued",1)
+    ExSetVariable("E3Four_Mission03Complete",1,1)
+    ExSetVariable("E3Four_LastCompletedMission",3,1)
+    e3_hero=ExGetMainHeroID()
+    if e3_hero ~= nil and e3_hero ~= 0 then
+        ExAddCommandText(e3_hero,"Mission 3 of 4 complete.",0)
+    end
+    ExAddCommandWin()
+end
+function Hook_OnStep()
+    if ExGetVariable("E3Four_Mission03Started") ~= 1 then
+        E3Four_Start()
+        return
+    end
+    if ExGetVariable("E3Four_Mission03WinQueued") == 1 then return end
+    if ExGetVariable("E3Four_Mission02Complete") ~= 1 then return end
+    e3_hero=ExGetMainHeroID()
+    if e3_hero == nil or e3_hero == 0 then return end
+    if CalcDistanceObjectPoint(e3_hero,9,8) < 2 then
+        E3Four_Complete()
+    end
+end
+function Hook_OnBattleFinishing(attacker_id,target_id,winner_id)
+    return 1
+end
