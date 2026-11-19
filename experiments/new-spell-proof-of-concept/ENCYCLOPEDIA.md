@@ -1,6 +1,6 @@
 # Encyclopedia registration
 
-The normal Chaots **Sorcery** table accepted `E3TC` from added resource records. The displayed row had the intended title, icon, cost and description. Call Lightning, Comet, Ether Vortex, Tremor, Ethereal Resonance and Firestorm remained visible alongside it. The Sorcery table displays its details inline.
+The normal Chaots **Sorcery** table accepted `E3TC` from added resource records. The displayed row had the intended title, icon, cost and description. Call Lightning, Comet, Ether Vortex, Tremor, Ethereal Resonance and Firestorm remained visible alongside it. The Sorcery table displayed its details inline. Any separate panel opened by clicking the row remains unverified.
 
 | Resource | Addition |
 | --- | --- |

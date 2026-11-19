@@ -1,6 +1,6 @@
 # Build and roll back the local TESTING CARD probe
 
-This is an Encyclopedia and deck-editor probe. Starting a Duel that contains `E3TC` reproduced a crash. Use a disposable copy for any test. Keep the generated archives and copied game local.
+This is an Encyclopedia and deck-editor probe. The game closed after the test preset was confirmed, and the read-only trace shows a missing producer if combat attempts to instantiate `E3TC`. Use a disposable copy for any test. Keep the generated archives and copied game local.
 
 ## Build
 
@@ -57,7 +57,7 @@ $env:__COMPAT_LAYER = 'WIN2000'
 Start-Process -FilePath (Join-Path $game 'Etherlords2.exe') -WorkingDirectory $game
 ```
 
-Use **Encyclopedia → Chaots → Sorcery** to see the icon, cost, and description. For the deck editor, use **Single → Duel → New**, select Chaots and set resource level 3. Add the Greater Unsummoning illustration from Available Spells and save a new preset. The optional [Duel preset fixture](duel-testing-card.prs) can instead be copied under a new filename into the disposable game's `Duel` directory while it is closed. The in-game test used an equivalent preset saved through the editor. Use the fixture for inspecting the saved format and editor. The known combat crash means there is no reason to include `E3TC` in a normal game or multiplayer deck.
+Use **Encyclopedia → Chaots → Sorcery** to see the icon, cost, and description. For the deck editor, use **Single → Duel → New**, select Chaots and set resource level 3. Add the Greater Unsummoning illustration from Available Spells and save a new preset. The optional [Duel preset fixture](duel-testing-card.prs) can instead be copied under a new filename into the disposable game's `Duel` directory while it is closed. The in-game test used an equivalent preset saved through the editor. Use the fixture for inspecting the saved format and editor. Keep `E3TC` out of normal game and multiplayer decks because its combat producer is absent.
 
 If Windows reports missing relative resources, launch with the game copy as the working directory. The command above does that. A separately failing installation may have a different cause.
 

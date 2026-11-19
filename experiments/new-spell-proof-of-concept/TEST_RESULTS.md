@@ -7,12 +7,12 @@ Tested on the English Windows build showing **Version 1.03**, using a separate d
 | Archive additions | Passed. `CombatSpells.reg` grew from 377 to 378, Red entries from 66 to 67. The only new spell ID is `E3TC`. All original sections and all unchanged RES members compare byte for byte. |
 | Localization | Passed. Original `ELKTexts.txt` bytes are an exact prefix of the staged member. Two unique text records were appended. The builder rejects duplicate stock IDs. |
 | Startup | Passed. The test copy launched using its own working directory and the existing `WIN2000` compatibility setting. The reported failure of the separate shared game folder was not diagnosed. |
-| Encyclopedia | Passed for the Chaots Sorcery table. Name, cost 1, icon 674 artwork and requested description rendered beside stock rows. The table was stable during inspection. |
+| Encyclopedia | Passed for the Chaots Sorcery table. Name, cost 1, icon 674 artwork and requested description rendered beside stock rows. The table was stable during inspection. A separate click-through panel was not verified. |
 | Duel editor | Passed. The red preset editor displayed the reused art in Available Spells and in the active deck. |
 | Duel preset save | Passed at file level. The game wrote `Duel/test1.prs` with `magic="Red"` and three `E3TC` cards. The committed test fixture uses the same card counts and leaves the other decks alone. |
-| Duel combat | Failed. The tester reported the game crashed around the point the card would be drawn. No successful draw was observed. The native lookup independently explains why an unregistered ID cannot be instantiated. |
+| Duel combat | Blocked. The tester confirmed that `test1` was saved with the cards and reported that the game closed after confirming the preset. Duel start, an attempted draw, and the precise reason for the exit are unconfirmed. The native lookup independently shows what would fail if combat instantiated the unknown ID. |
 | Cast, one-Ether debit, animation, enemy removal, combat completion | Unverified. The new ID never reached a successful draw or cast. |
-| Combat save/load | Unverified. The failing Duel never reached a verified state containing a playable copy of the spell. Saving a custom deck is a separate check. |
+| Combat save/load | Unverified. The experiment did not reach a verified combat state containing a playable copy of the spell. Saving a custom deck is a separate check. |
 
 ## SHA-256
 
