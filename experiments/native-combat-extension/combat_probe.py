@@ -56,10 +56,12 @@ def branch(opcode, at, destination):
     return bytes([opcode]) + p32((destination - at - 5) & 0xFFFFFFFF)
 
 
-def initializer_stub(address):
-    """Finish stock registration, then install a separately owned GRUN producer."""
+def initializer_stub(address, ident=b"E3TC", constructor=0x745CA0):
+    """Finish stock registration, then install a separately owned producer."""
+    if len(ident) != 4:
+        raise ValueError("Producer ID must occupy four bytes")
     code = bytearray.fromhex("89 38")  # mov [eax],edi — stock final slot
-    code += bytes.fromhex("81 7e 04") + p32(PRODUCER_COUNT)  # cmp dword [esi+4],343
+    code += bytes.fromhex("81 7e 04") + p32(PRODUCER_COUNT)  # cmp dword [esi+4],363
     wrong_count = len(code)
     code += b"\x75\x00"
     code += b"\x6a\x04"  # push 4 — a producer instance contains only its vptr
@@ -68,9 +70,9 @@ def initializer_stub(address):
     no_allocation = len(code)
     code += b"\x74\x00"
     code += bytes.fromhex("8b c8")  # mov ecx,eax
-    code += branch(0xE8, address + len(code), 0x745CA0)  # GRUN producer constructor
+    code += branch(0xE8, address + len(code), constructor)
     code += b"\x50"  # retain the new producer across map insertion
-    code += b"\x68E3TC"  # local key on the stack
+    code += b"\x68" + ident  # local key on the stack
     code += bytes.fromhex("8b c4 50 8b ce")  # mov eax,esp; push eax; mov ecx,esi
     code += branch(0xE8, address + len(code), 0x746580)  # thiscall map slot(key*)
     code += bytes.fromhex("83 c4 04 5a 89 10")  # remove key; pop edx; mov [eax],edx
@@ -163,6 +165,14 @@ def executable_buffer(api, process, generator):
     return stub
 
 
+def register_producer(api, process, record, ident=b"E3TC", constructor=0x745CA0):
+    stub = executable_buffer(api, process, lambda address: initializer_stub(address, ident, constructor))
+    jump = branch(0xE9, INITIALIZER_TAIL, stub) + b"\x90"
+    replace(api, process, INITIALIZER_TAIL, INITIALIZER_BYTES, jump)
+    record("patch", address=hex(INITIALIZER_TAIL), original=INITIALIZER_BYTES.hex(),
+           updated=jump.hex(), trampoline=hex(stub))
+
+
 def stage(api, process, profile, traces, record):
     if profile == "zap-three":
         for site in ZAP_SITES:
@@ -184,11 +194,7 @@ def stage(api, process, profile, traces, record):
         replace(api, process, ZAP_CAST_SLOT, p32(0x6F2160), p32(stub))
         record("patch", address=hex(ZAP_CAST_SLOT), original=p32(0x6F2160).hex(), updated=p32(stub).hex())
         return
-    stub = executable_buffer(api, process, initializer_stub)
-    jump = branch(0xE9, INITIALIZER_TAIL, stub) + b"\x90"
-    replace(api, process, INITIALIZER_TAIL, INITIALIZER_BYTES, jump)
-    record("patch", address=hex(INITIALIZER_TAIL), original=INITIALIZER_BYTES.hex(),
-           updated=jump.hex(), trampoline=hex(stub))
+    register_producer(api, process, record)
     if profile == "alias-flat":
         check = executable_buffer(api, process, flat_check_stub)
         debit = executable_buffer(api, process, lambda address: flat_debit_stub(address)[0])
@@ -211,17 +217,22 @@ def words(api, process, at, count):
     return struct.unpack(f"<{count}I", data)
 
 
-def producer(api, process, sentinel, ident):
+def registry_node(api, process, sentinel, ident):
     key = int.from_bytes(ident, "little")
     node, = words(api, process, sentinel + 4, 1)
     for _ in range(32):
         if not node or node == sentinel:
             break
-        left, right, node_key, value = words(api, process, node + 8, 4)
+        left, right, node_key = words(api, process, node + 8, 3)
         if node_key == key:
-            return value
+            return node
         node = left if key < node_key else right
     raise ValueError(f"No initialized node for {ident!r}")
+
+
+def producer(api, process, sentinel, ident):
+    node = registry_node(api, process, sentinel, ident)
+    return words(api, process, node + 0x14, 1)[0]
 
 
 def report_producers(api, process, record):
@@ -236,7 +247,7 @@ def report_producers(api, process, record):
            vtable=hex(PRODUCER_VTABLE))
 
 
-def trace_once(api, process, event, traces, record):
+def trace_once(api, process, event, traces, record, extension=None):
     """Capture one execution of a selected gameplay site, then remove its breakpoint."""
     address = event.data.exception.record.address
     original, kind = traces.pop(address)
@@ -247,7 +258,10 @@ def trace_once(api, process, event, traces, record):
         require(api.Wow64GetThreadContext(thread, context))
         index = REGISTER_INDEXES
         details = {"address": hex(address)}
-        if kind == "registry-ready":
+        if extension:
+            registers = {name: context[offset] for name, offset in index.items()}
+            details.update(extension.trace(api, process, kind, registers))
+        elif kind == "registry-ready":
             report_producers(api, process, record)
         elif kind == "grun-debit":
             spell = context[index["edi"]]
@@ -277,16 +291,16 @@ def trace_once(api, process, event, traces, record):
         api.CloseHandle(thread)
 
 
-def run(game, profile, log_path):
+def run(game, profile, log_path, *, extension=None):
     if os.name != "nt" or ct.sizeof(ct.c_void_p) != 8:
         raise ValueError("Use 64-bit Python on Windows for this 32-bit game")
-    local = (HERE / "local").resolve()
+    local = (extension.local if extension else HERE / "local").resolve()
     if (game.parent != local or not (game / ".native-combat-test").is_file()
             or (game / ".git").exists() or not log_path.is_relative_to(local)):
         raise ValueError("Use a marked direct child of this experiment's local directory and a local log")
     executable = game / "Etherlords2.exe"
     check_hashes(game, {"Etherlords2.exe": PINNED_EXE})
-    archives = PROFILE_ARCHIVES[profile]
+    archives = extension.archives if extension else PROFILE_ARCHIVES[profile]
     check_hashes(game / "Resources", archives)
     api = patch_api()
     with log_path.open("x", encoding="utf-8") as log:
@@ -334,7 +348,10 @@ def run(game, profile, log_path):
                         if base != IMAGE_BASE:
                             raise ValueError(f"Image base differs from the pinned map: {base:#x}")
                         record("image", base=hex(base))
-                        stage(api, handle, profile, traces, record)
+                        if extension:
+                            extension.stage(api, handle, traces, record)
+                        else:
+                            stage(api, handle, profile, traces, record)
                         for at, (original, _) in traces.items():
                             replace(api, handle, at, original, b"\xcc")
                         traced = True
@@ -345,7 +362,7 @@ def run(game, profile, log_path):
                         fault = detail.record
                         if detail.first_chance and fault.code in BREAKPOINT_CODES:
                             if traced and fault.address in traces:
-                                trace_once(api, handle, event, traces, record)
+                                trace_once(api, handle, event, traces, record, extension)
                                 continue
                             if fault.code not in startup:
                                 startup.add(fault.code)

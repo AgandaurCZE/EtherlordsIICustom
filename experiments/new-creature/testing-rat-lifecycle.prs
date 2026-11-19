@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<duel_preset name="Testing Rat - Lifecycle" magic="Red" resource_level="3" hero_level="3" specialization="NONE">
+  <skills/>
+  <deck>
+    <spell code="E3RT" components="1"/>
+    <spell code="E3RT" components="1"/>
+    <spell code="E3RT" components="1"/>
+    <spell code="E3RT" components="1"/>
+    <spell code="DMRT" components="1"/>
+    <spell code="DMRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="LGST" components="1"/>
+    <spell code="LGST" components="1"/>
+    <spell code="LGST" components="1"/>
+    <spell code="LGST" components="1"/>
+    <spell code="ZAPP" components="1"/>
+    <spell code="ZAPP" components="1"/>
+  </deck>
+  <bag_spells/>
+</duel_preset>
