@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<duel_preset name="Mechanics Wall Target" magic="Red" resource_level="3" hero_level="3" specialization="NONE">
+  <skills/>
+  <deck>
+    <spell code="SLWL" components="1"/>
+    <spell code="SLWL" components="1"/>
+    <spell code="SLWL" components="1"/>
+    <spell code="SLWL" components="1"/>
+    <spell code="WLMG" components="1"/>
+    <spell code="WLMG" components="1"/>
+    <spell code="WLMG" components="1"/>
+    <spell code="WLMG" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="STRT" components="1"/>
+    <spell code="FRWA" components="1"/>
+    <spell code="FRWA" components="1"/>
+    <spell code="FRWA" components="1"/>
+    <spell code="FRWA" components="1"/>
+  </deck>
+  <bag_spells/>
+</duel_preset>
