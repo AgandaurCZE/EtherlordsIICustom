@@ -1,6 +1,6 @@
 # Etherlords II 1.03 additive spell experiment
 
-**Partial success.** `E3TC` is a genuinely additional Chaots spell record. Etherlords II displayed it in the Encyclopedia and saved it in a new Duel deck. The game closed after the tester confirmed the preset. Whether a Duel started or a draw was attempted is unknown. Read-only inspection identified a separate native producer lookup that has no entry for `E3TC`.
+**An additive UI and deck entry with combat blocked.** Etherlords II displayed `E3TC` in the Encyclopedia and saved it in a new Duel deck. The original uninstrumented exit was inconclusive. The follow-up Duel controls reproduced the failure with one and three copies, identifying a null read in the producer factory during hand creation. [Crash analysis](CRASH_ANALYSIS.md)
 
 ## Database and native code
 
@@ -22,8 +22,8 @@ The addresses below are virtual addresses in the pinned executable with image ba
 | `0x746500` | Combat factory looks up the requested four-byte card ID in the producer map. The missing-key path constructs a node with a zero producer at `0x746532`. At `0x746551` the function loads that producer, then dereferences it at `0x746554` with no fallback. |
 | `0x7332dd`, `0x73341d` | Combat paths pass the requested spell ID into the same factory. |
 
-`native_producers.py` recovered 343 unique literal IDs at calls to the native registration routine. The three stock Kinets candidates are registered and `E3TC` is absent. This is a missing native producer binding, distinct from the number of rows the resource registry or Encyclopedia accepts. The read-only trace predicts a null dereference if combat tries to instantiate the new ID. No crash dump established the cause or instruction for the observed exit after deck confirmation.
+`native_producers.py` recovered 343 unique literal IDs at calls to the native registration routine. The three stock Kinets candidates are registered and `E3TC` is absent. The follow-up observer captured both accesses at `0x746554` with the original `E3TC` argument and a null producer pointer. This is distinct from the number of rows the resource registry or Encyclopedia accepts. [Producer architecture](PRODUCER_ARCHITECTURE.md)
 
-The largest working data-only result is the additive Encyclopedia and deck-editor record. An independently castable `E3TC` would require a supported producer extension or another legitimate engine interface that can bind a distinct ID. No such hook was verified. The metadata file has no supported way to borrow `GRUN`'s producer or configure its target loop. Reusing the original `GRUN` spell as an unchanged stock control remains possible in an isolated Kinets Duel, but it is a different card with different mechanics.
+The largest working data-only result is the additive Encyclopedia and deck-editor record. An independently castable `E3TC` would require a supported interface that can bind a distinct ID. No such hook was verified. The metadata file has no supported way to borrow `GRUN`'s producer or configure its target loop. The original `GRUN` was drawn and cast in the Kinets control Duel.
 
 An earlier community report also describes new IDs working in menus and decks but failing in combat. The binary REG format description provided an independent structural reference. [Original modder's report](https://www.gog.com/forum/etherlords_series/there_needs_to_be_a_modding_community/post17) · [Nival hashed REG format analysis](https://habr.com/ru/articles/434802/)

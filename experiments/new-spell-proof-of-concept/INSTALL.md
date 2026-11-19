@@ -1,6 +1,6 @@
 # Build and roll back the local TESTING CARD probe
 
-This is an Encyclopedia and deck-editor probe. The game closed after the test preset was confirmed, and the read-only trace shows a missing producer if combat attempts to instantiate `E3TC`. Use a disposable copy for any test. Keep the generated archives and copied game local.
+This is an Encyclopedia and deck-editor probe. The controlled Duel matrix confirmed that combat faults when instantiating `E3TC`. Use a disposable copy for any test. Keep the generated archives and copied game local.
 
 ## Build
 
@@ -60,6 +60,22 @@ Start-Process -FilePath (Join-Path $game 'Etherlords2.exe') -WorkingDirectory $g
 Use **Encyclopedia → Chaots → Sorcery** to see the icon, cost, and description. For the deck editor, use **Single → Duel → New**, select Chaots and set resource level 3. Add the Greater Unsummoning illustration from Available Spells and save a new preset. The optional [Duel preset fixture](duel-testing-card.prs) can instead be copied under a new filename into the disposable game's `Duel` directory while it is closed. The in-game test used an equivalent preset saved through the editor. Use the fixture for inspecting the saved format and editor. Keep `E3TC` out of normal game and multiplayer decks because its combat producer is absent.
 
 If Windows reports missing relative resources, launch with the game copy as the working directory. The command above does that. A separately failing installation may have a different cause.
+
+## Reproduce the controlled Duel matrix
+
+Use 64-bit Python on Windows and the same `$baseline` as above. The preparer verifies the pinned executable and both archive pairs before creating two new disposable copies below the experiment's ignored `local/` directory. The observer verifies the copy again, launches it with the correct working directory, and writes a new JSON Lines log. Leave the observer running until you close the game or it exits. Use a new log filename for each repeat.
+
+```powershell
+python prepare_duel_matrix.py $baseline
+python observe_duel.py local/duel-matrix/stock local/duel-matrix/logs/01-stock.jsonl
+# Run each command after the previous game has closed.
+python observe_duel.py local/duel-matrix/probe local/duel-matrix/logs/02-stock-decks.jsonl
+python observe_duel.py local/duel-matrix/probe local/duel-matrix/logs/03-one-e3tc.jsonl
+python observe_duel.py local/duel-matrix/probe local/duel-matrix/logs/04-three-e3tc.jsonl
+python observe_duel.py local/duel-matrix/probe local/duel-matrix/logs/05-grun.jsonl
+```
+
+Select the deck and resource level for each numbered process as listed in [CRASH_ANALYSIS.md](CRASH_ANALYSIS.md). For the stock controls, close after the opening hand is visible. For the GRUN control, wait for a creature and sufficient Ether before casting. Leave the two copied trees separate from the game you normally play. Ending the experiment requires no restoration of the source game.
 
 ## Roll back
 

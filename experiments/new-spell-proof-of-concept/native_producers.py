@@ -48,17 +48,39 @@ def producers(executable):
     return result
 
 
+def constructors(executable, registrations):
+    result = {}
+    for ident, address in registrations.items():
+        end = int(address, 16) - IMAGE_BASE
+        start = end - 62
+        # The allocation path calls the producer constructor and saves its result in EDI.
+        matches = list(re.finditer(rb"\x8b\xc8\xe8(....)\x8b\xf8", executable[start:end], re.S))
+        if len(matches) != 1:
+            raise ValueError(f"Unexpected producer constructor sequence for {ident}")
+        match = matches[0]
+        delta = struct.unpack("<i", match[1])[0]
+        result[ident] = hex(IMAGE_BASE + start + match.start() + 7 + delta)
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("exe", type=Path)
     parser.add_argument("ids", nargs="*", help="Limit output to these IDs")
+    parser.add_argument("--constructors", action="store_true", help="Include native constructor call targets")
     args = parser.parse_args()
     try:
-        found = producers(args.exe.read_bytes())
+        executable = args.exe.read_bytes()
+        found = producers(executable)
+        targets = constructors(executable, found) if args.constructors else None
     except (OSError, ValueError) as error:
         parser.exit(1, f"Error: {error}\n")
     result = {ident: found.get(ident) for ident in args.ids} if args.ids else dict(sorted(found.items()))
-    print(json.dumps({"producer_count": len(found), "registration_call_va": result}, indent=2))
+    report = {"producer_count": len(found), "registration_call_va": result}
+    if targets is not None:
+        report["distinct_constructor_targets"] = len(set(targets.values()))
+        report["constructor_va"] = {ident: targets.get(ident) for ident in result}
+    print(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":
