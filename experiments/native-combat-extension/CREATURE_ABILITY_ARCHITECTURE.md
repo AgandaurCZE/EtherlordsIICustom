@@ -1,0 +1,9 @@
+# Native creature ability attachment
+
+Stink Rat (`STRT`) and Doom Rat (`DMRT`) use separate vtables `0x8c2c20` and `0x8c2e18`. Their factories (`0x748550` and `0x748be0`) both allocate 0x3c bytes and invoke base constructor `0x737fd0`. The summon method is vtable slot +4. Stink Rat normally invokes `0x7380b0`. Doom Rat's override (`0x6f0480`) calls the same base method with the original object and arguments, checks its success, and then attaches Brotherhood.
+
+On successful summon, the override allocates a 0x2c-byte object. At `0x6f0531` it sets specialized vtable `0x8bfebc`. Fields at +0x24 and +0x28 receive battle context and the actual creature reference. At `0x6f0572`, the code inserts the pointer into that creature's ability container at creature +0x58. The method also builds the native event from the summoning spell's current ID. The activation method at `0x6f06f0` uses the stored combat and creature context. It checks whether the creature can act and whether the controlling hero has at least 2 Ether, then resolves the selected graveyard entry. A fresh ability per summon is required by those instance references. Disease Rat and Plague Rat follow related patterns with their own overrides and ability vtables.
+
+The test replaces only Stink Rat's summon-method slot, so the common creature creation receives the original `STRT` object and resource row. It uses the existing independently built 3/3 archive with the three Brotherhood metadata fields. Original Doom Rat keeps its own vtable and resources. The metadata-only control from the prior branch showed no ability.
+
+The evidence required is a summoned Stink Rat with its original model and 3/3 stats, a legal Brotherhood activation with an owned Rat in the graveyard, the Rat returning to hand, and a normal Duel completion. A visible ability alone establishes attachment at most. See [results](EXPERIMENT_RESULTS.md).
