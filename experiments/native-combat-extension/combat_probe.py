@@ -56,14 +56,11 @@ def branch(opcode, at, destination):
     return bytes([opcode]) + p32((destination - at - 5) & 0xFFFFFFFF)
 
 
-def initializer_stub(address, ident=b"E3TC", constructor=0x745CA0):
-    """Finish stock registration, then install a separately owned producer."""
+def producer_instructions(address, ident, constructor):
+    """Insert one engine-owned object, skipping its key if allocation fails."""
     if len(ident) != 4:
         raise ValueError("Producer ID must occupy four bytes")
-    code = bytearray.fromhex("89 38")  # mov [eax],edi — stock final slot
-    code += bytes.fromhex("81 7e 04") + p32(PRODUCER_COUNT)  # cmp dword [esi+4],363
-    wrong_count = len(code)
-    code += b"\x75\x00"
+    code = bytearray()
     code += b"\x6a\x04"  # push 4 — a producer instance contains only its vptr
     code += branch(0xE8, address + len(code), 0x82B410)  # engine operator new
     code += bytes.fromhex("83 c4 04 85 c0")  # add esp,4; test eax,eax
@@ -76,9 +73,18 @@ def initializer_stub(address, ident=b"E3TC", constructor=0x745CA0):
     code += bytes.fromhex("8b c4 50 8b ce")  # mov eax,esp; push eax; mov ecx,esi
     code += branch(0xE8, address + len(code), 0x746580)  # thiscall map slot(key*)
     code += bytes.fromhex("83 c4 04 5a 89 10")  # remove key; pop edx; mov [eax],edx
-    resume = len(code)
-    for skip in (wrong_count, no_allocation):
-        code[skip + 1] = resume - skip - 2
+    code[no_allocation + 1] = len(code) - no_allocation - 2
+    return code
+
+
+def initializer_stub(address, ident=b"E3TC", constructor=0x745CA0):
+    """Finish stock registration, then install a separately owned producer."""
+    code = bytearray.fromhex("89 38")  # mov [eax],edi — stock final slot
+    code += bytes.fromhex("81 7e 04") + p32(PRODUCER_COUNT)
+    code += b"\x75\x00"
+    wrong_count = len(code) - 1
+    code += producer_instructions(address + len(code), ident, constructor)
+    code[wrong_count] = len(code) - wrong_count - 1
     code += INITIALIZER_BYTES[:4]  # restore stock exception-frame input to epilogue
     code += branch(0xE9, address + len(code), INITIALIZER_TAIL + len(INITIALIZER_BYTES))
     return bytes(code)
@@ -155,7 +161,8 @@ def replace(api, process, address, original, updated):
 
 
 def executable_buffer(api, process, generator):
-    stub = require(api.VirtualAllocEx(process, None, 4096, 0x3000, 0x04))
+    length = len(generator(0))
+    stub = require(api.VirtualAllocEx(process, None, length, 0x3000, 0x04))
     code = generator(stub)
     write(api, process, stub, code)
     if memory(api, process, stub, len(code)) != code:

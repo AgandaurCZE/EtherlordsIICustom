@@ -1,0 +1,36 @@
+{
+  "format": 1,
+  "name": "Native combat examples",
+  "version": "0.1.0",
+  "cards": [
+    {
+      "id": "E3RT",
+      "kind": "creature",
+      "name": "TESTING Rat",
+      "faction": "Red",
+      "cost": 1,
+      "rarity": "Common",
+      "description": "Rest to deal 1 damage to a target creature or hero.",
+      "artwork": "MTPT",
+      "portrait_png": "",
+      "attack": 5,
+      "health": 5,
+      "family": "Rat",
+      "model": "MTPT",
+      "ability": "shaman"
+    },
+    {
+      "id": "E3TC",
+      "kind": "spell",
+      "name": "TESTING CARD",
+      "faction": "Red",
+      "cost": 1,
+      "rarity": "Unique",
+      "description": "Return eligible creatures on both sides to their heroes’ hands.",
+      "artwork": "GRUN",
+      "portrait_png": "",
+      "effect": "greater-unsummoning",
+      "flat_cost": true
+    }
+  ]
+}

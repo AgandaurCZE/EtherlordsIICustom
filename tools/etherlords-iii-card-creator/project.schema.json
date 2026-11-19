@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Etherlords III Card Creator project",
+  "type": "object",
+  "required": [
+    "format",
+    "name",
+    "version",
+    "cards"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "faction",
+              "cost",
+              "rarity",
+              "description",
+              "artwork",
+              "portrait_png",
+              "attack",
+              "health",
+              "family",
+              "model",
+              "ability"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{4}$"
+              },
+              "kind": {
+                "const": "creature"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "faction": {
+                "enum": [
+                  "Red",
+                  "Blue",
+                  "Green",
+                  "Black"
+                ]
+              },
+              "cost": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "rarity": {
+                "enum": [
+                  "Cantrip",
+                  "Common",
+                  "Rare",
+                  "Unique"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "artwork": {
+                "type": "string"
+              },
+              "portrait_png": {
+                "type": "string"
+              },
+              "attack": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "health": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 99
+              },
+              "family": {
+                "type": "string",
+                "minLength": 1
+              },
+              "model": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{4}$"
+              },
+              "ability": {
+                "enum": [
+                  "plain",
+                  "shaman",
+                  "brotherhood"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "name",
+              "faction",
+              "cost",
+              "rarity",
+              "description",
+              "artwork",
+              "portrait_png",
+              "effect",
+              "flat_cost"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Z0-9]{4}$"
+              },
+              "kind": {
+                "const": "spell"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "faction": {
+                "enum": [
+                  "Red",
+                  "Blue",
+                  "Green",
+                  "Black"
+                ]
+              },
+              "cost": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "rarity": {
+                "enum": [
+                  "Cantrip",
+                  "Common",
+                  "Rare",
+                  "Unique"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 400
+              },
+              "artwork": {
+                "type": "string"
+              },
+              "portrait_png": {
+                "const": ""
+              },
+              "effect": {
+                "const": "greater-unsummoning"
+              },
+              "flat_cost": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

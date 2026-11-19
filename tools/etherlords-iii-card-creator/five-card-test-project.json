@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "name": "Five-card integration test",
+  "version": "0.1.0",
+  "cards": [
+    {
+      "id": "E3RT",
+      "kind": "creature",
+      "name": "TESTING Rat",
+      "faction": "Red",
+      "cost": 1,
+      "rarity": "Common",
+      "description": "Rest to deal 1 damage to a target creature or hero.",
+      "artwork": "MTPT",
+      "portrait_png": "",
+      "attack": 5,
+      "health": 5,
+      "family": "Rat",
+      "model": "MTPT",
+      "ability": "shaman"
+    },
+    {
+      "id": "E3TC",
+      "kind": "spell",
+      "name": "TESTING CARD",
+      "faction": "Red",
+      "cost": 1,
+      "rarity": "Unique",
+      "description": "Return eligible creatures on both sides to their heroes’ hands.",
+      "artwork": "GRUN",
+      "portrait_png": "",
+      "effect": "greater-unsummoning",
+      "flat_cost": true
+    },
+    {
+      "id": "E3TG",
+      "kind": "creature",
+      "name": "Testing Guard",
+      "faction": "Red",
+      "cost": 2,
+      "rarity": "Common",
+      "description": "A plain Rat summon.",
+      "artwork": "STRT",
+      "portrait_png": "",
+      "attack": 2,
+      "health": 4,
+      "family": "Rat",
+      "model": "STRT",
+      "ability": "plain"
+    },
+    {
+      "id": "E3TS",
+      "kind": "creature",
+      "name": "Testing Shaman",
+      "faction": "Red",
+      "cost": 2,
+      "rarity": "Common",
+      "description": "Rest to deal 1 damage to a target creature or hero.",
+      "artwork": "KBSH",
+      "portrait_png": "",
+      "attack": 2,
+      "health": 3,
+      "family": "Kobold",
+      "model": "KBSH",
+      "ability": "shaman"
+    },
+    {
+      "id": "E3TU",
+      "kind": "spell",
+      "name": "Testing Recall",
+      "faction": "Red",
+      "cost": 2,
+      "rarity": "Unique",
+      "description": "Return eligible creatures on both sides to their heroes’ hands.",
+      "artwork": "GRUN",
+      "portrait_png": "",
+      "effect": "greater-unsummoning",
+      "flat_cost": true
+    }
+  ]
+}

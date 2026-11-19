@@ -79,14 +79,14 @@ def portrait_overlay(resources):
     return output
 
 
-def remove_flags(section):
+def remove_flags(section, ident=IDENT, donor_flags="Lifetap"):
     values = {}
     for key, (_, kind, offset) in read_fields(section).items():
         if key != b"Flags":
             _, end = read_value(section, kind, offset)
             values[key] = bytes((kind,)) + packed_string(key) + section[offset:end]
     count = len(values)
-    header = struct.pack("<H", count) + packed_string(IDENT)
+    header = struct.pack("<H", count) + packed_string(ident)
     slots = [None] * count
     collisions = []
     fields = bytearray()
@@ -106,7 +106,7 @@ def remove_flags(section):
         slots[replacement] = (link, offset)
     result = header + b"".join(REG_RECORD.pack(*row) for row in slots) + fields
     expected = field_values(section)
-    if expected.pop("Flags") != "Lifetap" or field_values(result) != expected:
+    if expected.pop("Flags") != donor_flags or field_values(result) != expected:
         raise ValueError("Unexpected Mantis flag or rebuilt creature definition")
     return result
 
