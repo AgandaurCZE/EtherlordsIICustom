@@ -102,3 +102,38 @@ Avoid earlier pitches that definitively close the story with “Destroy the Whit
 > **Engineered counterpart:** Created to serve, learns to become free, adapt its body and choose its own purpose.
 >
 > They do not fight in Etherlords III. **The possibility of their future clash is the final promise—not the final battle.**
+
+## Agreed narrative pattern for the four faction campaigns (2026-11-21)
+
+Each faction campaign is a self-contained four-mission adventure with its **own crisis, meaningful resolution, character decisions, and optional exploration**. Do not reduce it to a four-mission introduction for the later White hero.
+
+- **Missions 1–3:** The current faction confronts escalating regional problems, undertakes quests and makes decisions within its own lands.
+- **Mission 4:** Resolve that faction's immediate central conflict **and** present one brief, significant encounter, observation or event involving its route's White protagonist, to be revisited/explained in the White campaign.
+- **First faction on a route (Kinets / Synthets):** Discover an exceptional living anomaly (Vaelir) or develop the circumstances/blueprint of an exceptional engineered being (Construct), but keep important details hidden.
+- **Second faction (Vitals / Chaots):** Observe the protagonist's **second Ether affinity** beginning to emerge, through a short encounter or its aftermath; foreshadow a particular White-campaign event without explaining all its causes.
+- **White finale:** Play through the protagonist's earlier unseen journey and revisit the foreshadowed event from the inside. Reveal its real causes and consequences; do not merely repeat the same mission. Both White paths resolve the immediate shared crisis but leave the protagonists' eventual ideological confrontation unplayed.
+
+Examples, not locked scenes: Mirabell sees Vaelir trigger a strange ancient Kinet structure; a later Vital witness sees Blue/Green power in a forest. Synthet machine completes a cycle and supplies Construct's blueprint; Konnar later witnesses its Black/Red evolution.
+
+**Ordering principle:** Consequences may be shown before causes, but both protagonists always exist in the same timeline. Repeated locations or shared scenes should remain consistent across viewpoints.
+
+## Provisional level-design and mission scope (not locked)
+
+The official map editor reportedly supports 20×20 through 240×240 blocks. Proposed first-Kinet campaign pacing, to be playtested:
+
+| Mission | Map | Enemy battle encounters | Main questlines | Side questlines |
+|---|---|---:|---:|---:|
+| K1 — First Disturbance (working) | 40×40 | 8–10 | 2 | 2 |
+| K2 — The Frozen Passage (working) | 56×56 | 12–15 | 3 | 3 |
+| K3 — Echoes Beneath the Ice (working) | 72×72 | 16–20 | 3 | 4 |
+| K4 — The Silent Current (working) | 80×80 | 18–22 | 4 | 4 |
+
+These counts are **planning suggestions**, not game limits or finalized content. A few stronger optional encounters and a distinct climax per mission are desirable. Enemy encounters do not count the cards summoned within a battle. Individual questlines can contain multiple tasks.
+
+**Level targets require verification** of the actual cap and XP curve. A provisional overall cap of level 20 was discussed, but a more sustainable plan will likely use different starting levels for each faction hero and Vaelir rather than assuming a single continuous hero across faction changes. Preserve native progression within each hero's chapter. Test hero appearance breakpoints and level 20 explicitly.
+
+### Remaining mission design questions
+- Exact Kinet campaign first map layout, pacing, hero identity and starter deck.
+- Whether the current map slots/editor resources impose practical performance constraints beyond theoretical dimensions.
+- Number of mandatory combat gates versus optional encounters and how XP/loot affects balance.
+- Experience and skill progression for each **separate hero**, particularly when the campaign changes faction.
