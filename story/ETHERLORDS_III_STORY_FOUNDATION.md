@@ -137,3 +137,17 @@ These counts are **planning suggestions**, not game limits or finalized content.
 - Whether the current map slots/editor resources impose practical performance constraints beyond theoretical dimensions.
 - Number of mandatory combat gates versus optional encounters and how XP/loot affects balance.
 - Experience and skill progression for each **separate hero**, particularly when the campaign changes faction.
+
+## Correction: actual map-editor sizes (2026-11-21)
+
+The user supplied a screenshot of the **New scenario** dialog in the actual Etherlords II editor. It shows only **six selectable sizes: 20×20, 40×40, 80×80, 120×120, 160×160, 240×240**. The earlier speculative 56×56 and 72×72 sizes in the provisional table above **are invalid**; do not use them. The earlier 40×40 K1 recommendation is also rejected as far too small for the intended campaign.
+
+**Agreed design preference:** default to **120×120**; use **80×80** only for purposefully compact chapters; **160×160** for substantial chapters; **240×240** only with good reason and enough meaningful content. Avoid 20×20 and 40×40 for regular campaign missions.
+
+Updated provisional Kinet map plan:
+- K1 — First Disturbance: **120×120**. Initial target **14–18 battle encounters**, **3 main questlines**, **3–4 side questlines**, pending pacing tests.
+- K2 — The Frozen Passage: **120×120**.
+- K3 — Echoes Beneath the Ice: **160×160**.
+- K4 — The Silent Current: **160×160**.
+
+Counts in the original table above are **superseded** and should be revisited because the larger maps need purposeful pacing, not simply more filler combat. These sizes and counts are current recommendations rather than final approvals.
